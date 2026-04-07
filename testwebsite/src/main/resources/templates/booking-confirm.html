@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${hotelName} + ' — Booking Confirmed'">The Grand Horizon — Booking Confirmed</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+    <style>
+        :root{
+            --gold:#c9a96e;--gold-light:#e8d5b0;--gold-dim:rgba(201,169,110,0.12);
+            --gold-border:rgba(201,169,110,0.25);--bg:#08090a;--surface:#0f1012;
+            --card:#141618;--border:rgba(255,255,255,0.07);--text:#f2ede6;
+            --muted:#7a756c;--dim:#3d3a35;
+            --display:'Playfair Display',Georgia,serif;--body:'DM Sans',sans-serif;
+            --ease:cubic-bezier(0.25,0.46,0.45,0.94);
+        }
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        body{background:var(--bg);color:var(--text);font-family:var(--body);font-weight:300;line-height:1.7;-webkit-font-smoothing:antialiased;cursor:none;min-height:100vh;display:flex;flex-direction:column;}
+        a{color:inherit;text-decoration:none;transition:color 0.3s;}
+        ul{list-style:none;}
+        h1,h2,h3,h4{font-family:var(--display);font-weight:400;line-height:1.15;}
+        p{color:var(--muted);font-size:0.93rem;line-height:1.85;}
+
+        #cursorDot,#cursorRing{position:fixed;top:0;left:0;pointer-events:none;z-index:9999;}
+        .cursor__dot{width:8px;height:8px;background:var(--gold);border-radius:50%;transform:translate(-50%,-50%);}
+        .cursor__ring{width:36px;height:36px;border:1px solid rgba(201,169,110,0.5);border-radius:50%;transform:translate(-50%,-50%);transition:width 0.3s,height 0.3s;}
+
+        .btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.85rem 2.2rem;font-family:var(--body);font-size:0.75rem;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;border-radius:2px;transition:all 0.3s var(--ease);cursor:pointer;border:none;white-space:nowrap;}
+        .btn--primary{background:var(--gold);color:#08090a;}
+        .btn--primary:hover{background:var(--gold-light);transform:translateY(-2px);box-shadow:0 12px 32px rgba(201,169,110,0.25);}
+        .btn--outline{background:transparent;color:var(--gold);border:1px solid var(--gold-border);}
+        .btn--outline:hover{border-color:var(--gold);background:var(--gold-dim);transform:translateY(-2px);}
+        .btn--ghost{background:rgba(255,255,255,0.05);color:var(--text);border:1px solid var(--border);}
+        .btn--ghost:hover{background:rgba(255,255,255,0.1);transform:translateY(-2px);}
+
+        /* Navbar */
+        .navbar{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;justify-content:space-between;padding:1.5rem 5rem;background:rgba(8,9,10,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+        .navbar__logo{font-family:var(--display);font-size:1.35rem;display:flex;align-items:center;gap:0.6rem;}
+        .navbar__logo-mark{color:var(--gold);font-size:0.8rem;}
+        .navbar__cta{display:flex;align-items:center;gap:1rem;}
+
+        /* Main confirm area */
+        .confirm-page{flex:1;display:flex;align-items:center;justify-content:center;padding:8rem 2rem 5rem;background:radial-gradient(ellipse at 50% 10%,rgba(201,169,110,0.06) 0%,transparent 55%);}
+
+        .confirm-card{max-width:780px;width:100%;display:flex;flex-direction:column;align-items:center;gap:2.5rem;animation:fadeUp 0.8s var(--ease) both;}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:translateY(0);}}
+
+        /* Success icon with animated ring */
+        .confirm-icon{position:relative;width:80px;height:80px;display:flex;align-items:center;justify-content:center;}
+        .confirm-icon__ring{position:absolute;inset:0;border:1px solid var(--gold);border-radius:50%;animation:ringPulse 2.5s ease infinite;}
+        .confirm-icon__ring2{position:absolute;inset:-10px;border:1px solid rgba(201,169,110,0.2);border-radius:50%;animation:ringPulse 2.5s ease 0.4s infinite;}
+        @keyframes ringPulse{0%{opacity:1;transform:scale(1);}100%{opacity:0;transform:scale(1.3);}}
+        .confirm-icon__mark{font-size:1.8rem;color:var(--gold);position:relative;z-index:1;}
+
+        /* Header */
+        .confirm-header{text-align:center;}
+        .confirm-header__eyebrow{display:block;font-size:0.68rem;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);margin-bottom:0.8rem;}
+        .confirm-header h1{font-size:clamp(2.2rem,5vw,4rem);margin-bottom:0.6rem;}
+        .confirm-header h1 em{font-style:italic;color:var(--gold);}
+        .confirm-header p{font-size:0.95rem;max-width:420px;margin:0 auto;}
+        .confirm-header p strong{color:var(--text);}
+
+        /* Code badge */
+        .confirm-code{width:100%;background:var(--gold-dim);border:1px solid var(--gold-border);border-radius:2px;padding:1.8rem 2.5rem;display:flex;align-items:center;justify-content:space-between;gap:2rem;flex-wrap:wrap;}
+        .confirm-code__label{font-size:0.62rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:0.4rem;}
+        .confirm-code__value{font-family:var(--display);font-size:2.4rem;font-weight:300;color:var(--text);letter-spacing:0.06em;}
+        .confirm-code__tip{font-size:0.78rem;color:var(--muted);max-width:220px;text-align:right;}
+
+        /* Detail panel */
+        .confirm-details{width:100%;background:var(--card);border:1px solid var(--border);border-radius:2px;overflow:hidden;}
+
+        .confirm-room{display:flex;align-items:center;gap:1.5rem;padding:1.8rem;background:var(--surface);border-bottom:1px solid var(--border);}
+        .confirm-room__img{width:110px;height:80px;border-radius:2px;background-size:cover;background-position:center;flex-shrink:0;}
+        .confirm-room__type{font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:0.3rem;font-weight:500;}
+        .confirm-room__name{font-family:var(--display);font-size:1.3rem;font-weight:400;margin-bottom:0.2rem;}
+        .confirm-room__meta{font-size:0.82rem;color:var(--muted);}
+
+        .confirm-grid{display:grid;grid-template-columns:repeat(3,1fr);}
+        .confirm-cell{padding:1.4rem 1.8rem;border-right:1px solid var(--border);border-bottom:1px solid var(--border);}
+        .confirm-cell:nth-child(3n){border-right:none;}
+        .confirm-cell:nth-last-child(-n+3){border-bottom:none;}
+        .confirm-cell__label{font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:0.3rem;font-weight:500;}
+        .confirm-cell__value{font-size:0.92rem;color:var(--text);}
+        .confirm-cell--highlight .confirm-cell__value{font-family:var(--display);font-size:1.5rem;color:var(--gold);}
+
+        .confirm-requests{padding:1.4rem 1.8rem;border-top:1px solid var(--border);}
+        .confirm-requests__label{font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:0.4rem;font-weight:500;}
+        .confirm-requests p{font-size:0.88rem;}
+
+        /* Actions */
+        .confirm-actions{display:flex;gap:0.8rem;flex-wrap:wrap;justify-content:center;}
+
+        /* Note */
+        .confirm-note{font-size:0.78rem;color:var(--dim);text-align:center;line-height:1.8;max-width:480px;}
+        .confirm-note a{color:var(--gold);}
+        .confirm-note a:hover{color:var(--gold-light);}
+
+        /* Footer */
+        .footer{background:var(--surface);border-top:1px solid var(--border);padding:4rem 5rem 2rem;}
+        .footer__bottom{max-width:1300px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;}
+        .footer__bottom p{font-size:0.75rem;color:var(--dim);}
+
+        ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px;}::-webkit-scrollbar-thumb:hover{background:var(--gold);}
+
+        @media print{
+            .navbar,.confirm-actions,.confirm-note,.footer,#cursorDot,#cursorRing{display:none!important;}
+            .confirm-page{padding-top:2rem;}
+            body{background:#fff;color:#000;}
+            .confirm-card,.confirm-code,.confirm-details{background:#fff;border-color:#ddd;}
+            .confirm-code__value,.confirm-cell--highlight .confirm-cell__value{color:#b8902a;}
+        }
+
+        @media(max-width:768px){
+            .navbar{padding-left:1.5rem;padding-right:1.5rem;}
+            .confirm-page{padding-left:1.5rem;padding-right:1.5rem;}
+            .confirm-code{flex-direction:column;gap:0.8rem;}
+            .confirm-code__tip{text-align:left;}
+            .confirm-grid{grid-template-columns:1fr 1fr;}
+            .confirm-cell:nth-child(3n){border-right:1px solid var(--border);}
+            .confirm-cell:nth-child(2n){border-right:none;}
+            .confirm-actions{flex-direction:column;width:100%;}
+            .confirm-actions .btn{width:100%;justify-content:center;}
+            .footer{padding:2rem 1.5rem;}
+            .footer__bottom{flex-direction:column;gap:0.6rem;text-align:center;}
+        }
+    </style>
+</head>
+<body>
+
+<div id="cursorDot"><div class="cursor__dot"></div></div>
+<div id="cursorRing"><div class="cursor__ring"></div></div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+    <a th:href="@{/}" class="navbar__logo"><span class="navbar__logo-mark">✦</span><span th:text="${hotelName}">The Grand Horizon</span></a>
+    <div class="navbar__cta">
+        <a th:href="@{/}" class="btn btn--ghost" style="padding:0.6rem 1.4rem;font-size:0.7rem;">← Home</a>
+        <a th:href="@{/rooms}" class="btn btn--primary" style="padding:0.6rem 1.4rem;font-size:0.7rem;">Browse Rooms</a>
+    </div>
+</nav>
+
+<!-- CONFIRMATION -->
+<div class="confirm-page">
+    <div class="confirm-card">
+
+        <!-- Icon -->
+        <div class="confirm-icon">
+            <div class="confirm-icon__ring"></div>
+            <div class="confirm-icon__ring2"></div>
+            <span class="confirm-icon__mark">✦</span>
+        </div>
+
+        <!-- Header -->
+        <div class="confirm-header">
+            <span class="confirm-header__eyebrow">Reservation Confirmed</span>
+            <h1>You're all set, <em th:text="${booking.guest.firstName}">Guest</em>.</h1>
+            <p>A confirmation has been sent to <strong th:text="${booking.guest.email}">guest@email.com</strong>. Please keep your confirmation code safe.</p>
+        </div>
+
+        <!-- Confirmation Code -->
+        <div class="confirm-code">
+            <div>
+                <span class="confirm-code__label">Confirmation Code</span>
+                <span class="confirm-code__value" th:text="${booking.confirmationCode}">GH-XXXXXXXX</span>
+            </div>
+            <p class="confirm-code__tip">Use this code to manage or look up your booking at any time.</p>
+        </div>
+
+        <!-- Detail Panel -->
+        <div class="confirm-details">
+
+            <!-- Room row -->
+            <div class="confirm-room">
+                <div class="confirm-room__img" th:style="'background-image:url(' + ${booking.room.imageUrl} + ')'"></div>
+                <div>
+                    <span class="confirm-room__type" th:text="${booking.room.type}">Suite</span>
+                    <div class="confirm-room__name" th:text="${booking.room.name}">Room Name</div>
+                    <div class="confirm-room__meta" th:text="${booking.room.view} + ' View · ' + ${booking.room.sizeSqm} + ' m² · ' + ${booking.room.bedCount} + ' ' + ${booking.room.bedType} + ' Bed'">Ocean View · 65 m²</div>
+                </div>
+            </div>
+
+            <!-- Data grid -->
+            <div class="confirm-grid">
+                <div class="confirm-cell">
+                    <span class="confirm-cell__label">Guest</span>
+                    <span class="confirm-cell__value" th:text="${booking.guest.fullName}">Jane Smith</span>
+                </div>
+                <div class="confirm-cell">
+                    <span class="confirm-cell__label">Guests</span>
+                    <span class="confirm-cell__value" th:text="${booking.guestCount} + (${booking.guestCount} == 1 ? ' Guest' : ' Guests')">2 Guests</span>
+                </div>
+                <div class="confirm-cell">
+                    <span class="confirm-cell__label">Status</span>
+                    <span class="confirm-cell__value" style="color:#5cad78;" th:text="${booking.status}">CONFIRMED</span>
+                </div>
+                <div class="confirm-cell">
+                    <span class="confirm-cell__label">Check In</span>
+                    <span class="confirm-cell__value" th:text="${#temporals.format(booking.checkIn,'dd MMM yyyy')}">01 Jan 2026</span>
+                </div>
+                <div class="confirm-cell">
+                    <span class="confirm-cell__label">Check Out</span>
+                    <span class="confirm-cell__value" th:text="${#temporals.format(booking.checkOut,'dd MMM yyyy')}">05 Jan 2026</span>
+                </div>
+                <div class="confirm-cell">
+                    <span class="confirm-cell__label">Nights</span>
+                    <span class="confirm-cell__value" th:text="${booking.nights} + (${booking.nights} == 1 ? ' night' : ' nights')">4 nights</span>
+                </div>
+                <div class="confirm-cell confirm-cell--highlight" style="grid-column:1/-1;border-right:none;">
+                    <span class="confirm-cell__label">Total Charged</span>
+                    <span class="confirm-cell__value" th:text="'$' + ${#numbers.formatDecimal(booking.totalPrice,0,'COMMA',0,'POINT')}">$1,680</span>
+                </div>
+            </div>
+
+            <!-- Special requests -->
+            <div class="confirm-requests" th:if="${booking.specialRequests != null and !booking.specialRequests.isBlank()}">
+                <span class="confirm-requests__label">Special Requests</span>
+                <p th:text="${booking.specialRequests}">Request text.</p>
+            </div>
+
+        </div>
+
+        <!-- Actions -->
+        <div class="confirm-actions">
+            <a th:href="@{/}" class="btn btn--ghost">Back to Home</a>
+            <a th:href="@{/rooms}" class="btn btn--outline">Browse More Rooms</a>
+            <button onclick="window.print()" class="btn btn--primary">Print Confirmation</button>
+        </div>
+
+        <!-- Note -->
+        <p class="confirm-note">
+            Need to make changes? Contact us at
+            <a href="mailto:reservations@grandhorizon.com">reservations@grandhorizon.com</a>
+            or call <strong style="color:var(--text);">+1 (800) 000-0001</strong>.<br/>
+            Free cancellation up to 48 hours before check-in. You can also
+            <a th:href="@{/booking/lookup}">look up this booking</a> at any time.
+        </p>
+
+    </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="footer__bottom">
+        <p>&copy; 2026 <span th:text="${hotelName}">The Grand Horizon</span>. All rights reserved.</p>
+        <p>Privacy Policy · Terms of Service</p>
+    </div>
+</footer>
+
+<script>
+    const dot=document.getElementById('cursorDot'),ring=document.getElementById('cursorRing');
+    let mx=0,my=0,rx=0,ry=0;
+    document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px';});
+    (function anim(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(anim);})();
+</script>
+</body>
+</html>

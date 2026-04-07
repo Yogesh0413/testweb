@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${hotelName} + ' — Admin Dashboard'">Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+    <style>
+        :root {
+            --gold: #c9a96e; --gold-light: #e8d5b0; --gold-dim: rgba(201,169,110,0.1);
+            --gold-border: rgba(201,169,110,0.2); --bg: #07080a; --surface: #0d0f11;
+            --card: #121416; --card2: #181a1d; --border: rgba(255,255,255,0.06);
+            --text: #f0ebe3; --muted: #6b6760; --dim: #333;
+            --green: #5cad78; --green-dim: rgba(92,173,120,0.12);
+            --red: #c06060; --red-dim: rgba(192,96,96,0.12);
+            --yellow: #c9a96e; --yellow-dim: rgba(201,169,110,0.12);
+            --display: 'Playfair Display', Georgia, serif; --body: 'DM Sans', sans-serif;
+            --ease: cubic-bezier(0.25,0.46,0.45,0.94);
+            --sidebar: 260px;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body { background: var(--bg); color: var(--text); font-family: var(--body); font-weight: 300; line-height: 1.6; -webkit-font-smoothing: antialiased; display: flex; min-height: 100vh; }
+        a { color: inherit; text-decoration: none; }
+        ul { list-style: none; }
+        h1,h2,h3,h4 { font-family: var(--display); font-weight: 400; }
+        p { color: var(--muted); font-size: 0.88rem; line-height: 1.75; }
+
+        /* ─── SIDEBAR ─── */
+        .sidebar {
+            width: var(--sidebar); background: var(--surface); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 200;
+        }
+        .sidebar__brand { padding: 2rem 1.8rem; border-bottom: 1px solid var(--border); }
+        .sidebar__brand-logo { font-family: var(--display); font-size: 1.15rem; color: var(--gold); display: flex; align-items: center; gap: 0.5rem; }
+        .sidebar__brand-logo span:first-child { font-size: 0.75rem; }
+        .sidebar__brand-sub { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-top: 0.3rem; }
+
+        .sidebar__nav { flex: 1; padding: 1.5rem 0; overflow-y: auto; }
+        .sidebar__section-label { font-size: 0.58rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); padding: 0.8rem 1.8rem 0.4rem; display: block; }
+        .sidebar__link {
+            display: flex; align-items: center; gap: 0.8rem;
+            padding: 0.75rem 1.8rem; font-size: 0.8rem; color: var(--muted);
+            transition: all 0.2s; position: relative;
+        }
+        .sidebar__link:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+        .sidebar__link.active { color: var(--gold); background: var(--gold-dim); }
+        .sidebar__link.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--gold); }
+        .sidebar__link-icon { font-size: 0.85rem; width: 18px; text-align: center; flex-shrink: 0; }
+        .sidebar__badge { margin-left: auto; background: var(--gold-dim); color: var(--gold); font-size: 0.62rem; font-weight: 500; padding: 0.15rem 0.5rem; border-radius: 10px; border: 1px solid var(--gold-border); }
+
+        .sidebar__footer { padding: 1.5rem 1.8rem; border-top: 1px solid var(--border); }
+        .sidebar__back { display: flex; align-items: center; gap: 0.6rem; font-size: 0.78rem; color: var(--muted); transition: color 0.2s; }
+        .sidebar__back:hover { color: var(--gold); }
+
+        /* ─── MAIN CONTENT ─── */
+        .main { margin-left: var(--sidebar); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+        .topbar {
+            background: var(--surface); border-bottom: 1px solid var(--border);
+            padding: 1.2rem 3rem; display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .topbar__left h1 { font-size: 1.4rem; font-weight: 400; }
+        .topbar__left p { font-size: 0.75rem; color: var(--muted); margin-top: 0.1rem; }
+        .topbar__right { display: flex; align-items: center; gap: 1.5rem; }
+        .topbar__date { font-size: 0.75rem; color: var(--muted); }
+        .topbar__admin { display: flex; align-items: center; gap: 0.6rem; font-size: 0.8rem; }
+        .topbar__avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold-dim); border: 1px solid var(--gold-border); display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: 0.7rem; }
+
+        /* Flash Messages */
+        .flash { margin: 1.5rem 3rem 0; padding: 0.9rem 1.2rem; border-radius: 2px; font-size: 0.83rem; display: flex; align-items: center; gap: 0.6rem; }
+        .flash--success { background: var(--green-dim); border: 1px solid rgba(92,173,120,0.25); color: var(--green); }
+        .flash--error   { background: var(--red-dim);   border: 1px solid rgba(192,96,96,0.25);  color: var(--red);   }
+
+        /* ─── STAT CARDS ─── */
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); margin: 2rem 3rem 0; border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
+        .stat-card { background: var(--card); padding: 1.8rem 2rem; transition: background 0.2s; }
+        .stat-card:hover { background: var(--card2); }
+        .stat-card__label { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 0.8rem; }
+        .stat-card__value { font-family: var(--display); font-size: 2.5rem; font-weight: 400; line-height: 1; display: block; margin-bottom: 0.3rem; }
+        .stat-card__sub { font-size: 0.75rem; color: var(--muted); }
+        .stat-card--gold   .stat-card__value { color: var(--gold); }
+        .stat-card--green  .stat-card__value { color: var(--green); }
+        .stat-card--red    .stat-card__value { color: var(--red); }
+        .stat-card--yellow .stat-card__value { color: var(--yellow); }
+
+        /* ─── SECTION HEADERS ─── */
+        .section-header { display: flex; align-items: center; justify-content: space-between; margin: 2.5rem 3rem 1.2rem; }
+        .section-header h2 { font-size: 1.3rem; }
+        .section-header p  { font-size: 0.78rem; color: var(--muted); }
+
+        /* ─── BOOKINGS TABLE ─── */
+        .table-wrap { margin: 0 3rem; background: var(--card); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
+        .table-search { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 1rem; }
+        .table-search input {
+            background: transparent; border: none; border-bottom: 1px solid var(--border);
+            color: var(--text); font-family: var(--body); font-size: 0.85rem;
+            padding: 0.4rem 0; outline: none; width: 260px; transition: border-color 0.2s;
+        }
+        .table-search input:focus { border-color: var(--gold); }
+        .table-search input::placeholder { color: var(--muted); }
+
+        table { width: 100%; border-collapse: collapse; }
+        thead th { padding: 0.9rem 1.5rem; text-align: left; font-family: var(--body); font-size: 0.62rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); background: var(--card2); white-space: nowrap; }
+        tbody td { padding: 1rem 1.5rem; font-size: 0.83rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover td { background: rgba(255,255,255,0.015); }
+
+        .badge { display: inline-flex; align-items: center; padding: 0.2rem 0.65rem; border-radius: 10px; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; }
+        .badge--confirmed { background: var(--green-dim); color: var(--green); border: 1px solid rgba(92,173,120,0.2); }
+        .badge--pending   { background: var(--yellow-dim); color: var(--yellow); border: 1px solid var(--gold-border); }
+        .badge--cancelled { background: var(--red-dim); color: var(--red); border: 1px solid rgba(192,96,96,0.2); }
+
+        .table-empty { padding: 4rem; text-align: center; color: var(--muted); font-size: 0.88rem; }
+
+        .action-btn { background: none; border: 1px solid var(--border); color: var(--muted); font-family: var(--body); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.35rem 0.8rem; border-radius: 2px; cursor: pointer; transition: all 0.2s; }
+        .action-btn:hover { border-color: var(--red); color: var(--red); background: var(--red-dim); }
+        .action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        /* ─── ROOMS TABLE ─── */
+        .room-img-thumb { width: 48px; height: 38px; border-radius: 2px; background-size: cover; background-position: center; flex-shrink: 0; }
+        .room-name-cell { display: flex; align-items: center; gap: 0.8rem; }
+
+        .toggle-btn { background: none; border: 1px solid var(--border); color: var(--muted); font-family: var(--body); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.35rem 0.8rem; border-radius: 2px; cursor: pointer; transition: all 0.2s; }
+        .toggle-btn--available { border-color: var(--green); color: var(--green); }
+        .toggle-btn--available:hover { background: var(--green-dim); }
+        .toggle-btn--unavailable { border-color: var(--red); color: var(--red); }
+        .toggle-btn--unavailable:hover { background: var(--red-dim); }
+
+        /* ─── FOOTER ─── */
+        .admin-footer { margin-top: auto; padding: 1.5rem 3rem; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .admin-footer p { font-size: 0.73rem; color: var(--muted); }
+        .admin-footer a { color: var(--gold); font-size: 0.73rem; transition: color 0.2s; }
+        .admin-footer a:hover { color: var(--gold-light); }
+
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; } ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s var(--ease); }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
+            .topbar, .section-header, .table-wrap, .stats-row, .flash, .admin-footer { margin-left: 1rem; margin-right: 1rem; }
+            .topbar { padding: 1.2rem 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════
+     SIDEBAR
+═══════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar__brand">
+        <div class="sidebar__brand-logo"><span>✦</span><span th:text="${hotelName}">The Grand Horizon</span></div>
+        <div class="sidebar__brand-sub">Admin Panel</div>
+    </div>
+
+    <nav class="sidebar__nav">
+        <span class="sidebar__section-label">Overview</span>
+        <a href="#bookings" class="sidebar__link active" onclick="showSection('bookings', this)">
+            <span class="sidebar__link-icon">◎</span> Bookings
+            <span class="sidebar__badge" th:text="${confirmed}">0</span>
+        </a>
+        <a href="#rooms" class="sidebar__link" onclick="showSection('rooms', this)">
+            <span class="sidebar__link-icon">⬡</span> Rooms
+        </a>
+        <a href="#stats" class="sidebar__link" onclick="showSection('stats', this)">
+            <span class="sidebar__link-icon">✦</span> Revenue
+        </a>
+
+        <span class="sidebar__section-label" style="margin-top:1rem;">Quick Links</span>
+        <a th:href="@{/rooms}"   class="sidebar__link"><span class="sidebar__link-icon">◈</span> Room Listings</a>
+        <a th:href="@{/booking}" class="sidebar__link"><span class="sidebar__link-icon">△</span> New Booking</a>
+        <a th:href="@{/gallery}" class="sidebar__link"><span class="sidebar__link-icon">○</span> Gallery</a>
+    </nav>
+
+    <div class="sidebar__footer">
+        <a th:href="@{/}" class="sidebar__back">← Back to Website</a>
+    </div>
+</aside>
+
+<!-- ═══════════════════════════════
+     MAIN
+═══════════════════════════════ -->
+<div class="main">
+
+    <!-- Topbar -->
+    <header class="topbar">
+        <div class="topbar__left">
+            <h1>Dashboard</h1>
+            <p th:text="${hotelName} + ' · Administration'">The Grand Horizon · Administration</p>
+        </div>
+        <div class="topbar__right">
+            <span class="topbar__date" id="currentDate"></span>
+            <div class="topbar__admin">
+                <div class="topbar__avatar">A</div>
+                <span>Admin</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Flash messages -->
+    <div class="flash flash--success" th:if="${success}" th:text="${success}"></div>
+    <div class="flash flash--error"   th:if="${error}"   th:text="${error}"></div>
+
+    <!-- ─── STAT CARDS ─── -->
+    <div class="stats-row" id="section-stats">
+        <div class="stat-card stat-card--gold">
+            <span class="stat-card__label">Total Revenue</span>
+            <span class="stat-card__value" th:text="'$' + ${#numbers.formatDecimal(revenue, 0, 'COMMA', 0, 'POINT')}">$0</span>
+            <span class="stat-card__sub">Confirmed bookings only</span>
+        </div>
+        <div class="stat-card stat-card--green">
+            <span class="stat-card__label">Confirmed</span>
+            <span class="stat-card__value" th:text="${confirmed}">0</span>
+            <span class="stat-card__sub">Active reservations</span>
+        </div>
+        <div class="stat-card stat-card--yellow">
+            <span class="stat-card__label">Pending</span>
+            <span class="stat-card__value" th:text="${pending}">0</span>
+            <span class="stat-card__sub">Awaiting confirmation</span>
+        </div>
+        <div class="stat-card stat-card--red">
+            <span class="stat-card__label">Cancelled</span>
+            <span class="stat-card__value" th:text="${cancelled}">0</span>
+            <span class="stat-card__sub">This period</span>
+        </div>
+    </div>
+
+    <!-- ─── BOOKINGS TABLE ─── -->
+    <div id="section-bookings">
+        <div class="section-header">
+            <h2>All Bookings</h2>
+            <p th:text="${bookings.size()} + ' total records'">0 total records</p>
+        </div>
+
+        <div class="table-wrap">
+            <div class="table-search">
+                <input type="text" id="bookingSearch" placeholder="Search by guest, room, or code…" oninput="filterTable('bookingTable', this.value)"/>
+            </div>
+
+            <div th:if="${bookings.isEmpty()}" class="table-empty">
+                No bookings yet. <a th:href="@{/booking}" style="color:var(--gold);">Create one →</a>
+            </div>
+
+            <table id="bookingTable" th:if="${!bookings.isEmpty()}">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Guest</th>
+                        <th>Room</th>
+                        <th>Check In</th>
+                        <th>Check Out</th>
+                        <th>Nights</th>
+                        <th>Guests</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="b : ${bookings}">
+                        <td style="font-family:var(--display);color:var(--gold);font-size:0.78rem;" th:text="${b.confirmationCode}">GH-XXXX</td>
+                        <td>
+                            <div th:text="${b.guest.fullName}" style="color:var(--text);">Name</div>
+                            <div th:text="${b.guest.email}" style="font-size:0.75rem;color:var(--muted);">email</div>
+                        </td>
+                        <td th:text="${b.room.name}">Room</td>
+                        <td th:text="${#temporals.format(b.checkIn,  'dd MMM yyyy')}">Date</td>
+                        <td th:text="${#temporals.format(b.checkOut, 'dd MMM yyyy')}">Date</td>
+                        <td th:text="${b.nights}">0</td>
+                        <td th:text="${b.guestCount}">0</td>
+                        <td style="color:var(--gold);font-family:var(--display);" th:text="'$' + ${#numbers.formatDecimal(b.totalPrice, 0, 'COMMA', 0, 'POINT')}">$0</td>
+                        <td>
+                            <span th:classappend="${b.status.name() == 'CONFIRMED'} ? 'badge--confirmed' : (${b.status.name() == 'PENDING'} ? 'badge--pending' : 'badge--cancelled')"
+                                  class="badge"
+                                  th:text="${b.status}">STATUS</span>
+                        </td>
+                        <td>
+                            <form th:action="@{/admin/bookings/{id}/cancel(id=${b.id})}" method="post" style="display:inline;">
+                                <button type="submit" class="action-btn"
+                                        th:disabled="${b.status.name() == 'CANCELLED'}"
+                                        onclick="return confirm('Cancel this booking?')">Cancel</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ─── ROOMS TABLE ─── -->
+    <div id="section-rooms">
+        <div class="section-header">
+            <h2>Room Inventory</h2>
+            <p th:text="${rooms.size()} + ' rooms total'">0 rooms</p>
+        </div>
+
+        <div class="table-wrap" style="margin-bottom: 3rem;">
+            <div class="table-search">
+                <input type="text" id="roomSearch" placeholder="Search rooms…" oninput="filterTable('roomTable', this.value)"/>
+            </div>
+
+            <table id="roomTable" th:if="${!rooms.isEmpty()}">
+                <thead>
+                    <tr>
+                        <th>Room</th>
+                        <th>Type</th>
+                        <th>Bed</th>
+                        <th>Size</th>
+                        <th>Max Guests</th>
+                        <th>Price / Night</th>
+                        <th>View</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="r : ${rooms}">
+                        <td>
+                            <div class="room-name-cell">
+                                <div class="room-img-thumb" th:style="'background-image:url(' + ${r.imageUrl} + ')'"></div>
+                                <span th:text="${r.name}" style="color:var(--text);">Room Name</span>
+                            </div>
+                        </td>
+                        <td th:text="${r.type}">Suite</td>
+                        <td th:text="${r.bedCount} + ' ' + ${r.bedType}">1 King</td>
+                        <td th:text="${r.sizeSqm} + ' m²'">65 m²</td>
+                        <td th:text="${r.maxGuests}">2</td>
+                        <td style="color:var(--gold);font-family:var(--display);" th:text="'$' + ${#numbers.formatDecimal(r.pricePerNight, 0, 0)}">$0</td>
+                        <td th:text="${r.view}">Ocean</td>
+                        <td>
+                            <span th:classappend="${r.available} ? 'badge--confirmed' : 'badge--cancelled'"
+                                  class="badge"
+                                  th:text="${r.available} ? 'Available' : 'Unavailable'">Available</span>
+                        </td>
+                        <td>
+                            <form th:action="@{/admin/rooms/{id}/toggle(id=${r.id})}" method="post" style="display:inline;">
+                                <button type="submit"
+                                        th:classappend="${r.available} ? 'toggle-btn--available' : 'toggle-btn--unavailable'"
+                                        class="toggle-btn"
+                                        th:text="${r.available} ? 'Set Unavailable' : 'Set Available'">Toggle</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Admin Footer -->
+    <footer class="admin-footer">
+        <p>&copy; 2026 <span th:text="${hotelName}">The Grand Horizon</span> · Admin Panel</p>
+        <a th:href="@{/}">← View Public Site</a>
+    </footer>
+</div>
+
+<script>
+    // Date
+    document.getElementById('currentDate').textContent =
+        new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+    // Section switching (sidebar links)
+    function showSection(name, el) {
+        event.preventDefault();
+        document.querySelectorAll('.sidebar__link').forEach(l => l.classList.remove('active'));
+        el.classList.add('active');
+        // All sections are always visible; this just scrolls to them
+        const target = document.getElementById('section-' + name);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Table search filter
+    function filterTable(tableId, query) {
+        const table = document.getElementById(tableId);
+        if (!table) return;
+        const q = query.toLowerCase();
+        table.querySelectorAll('tbody tr').forEach(row => {
+            row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+    }
+
+    // Mobile sidebar toggle (optional — add a hamburger if needed)
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') document.getElementById('sidebar')?.classList.remove('open');
+    });
+</script>
+</body>
+</html>

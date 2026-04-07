@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${hotelName} + ' — Amenities'">The Grand Horizon — Amenities</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+    <style>
+        :root {
+            --gold: #c9a96e; --gold-light: #e8d5b0; --gold-dim: rgba(201,169,110,0.12);
+            --gold-border: rgba(201,169,110,0.25); --bg: #08090a; --surface: #0f1012;
+            --card: #141618; --border: rgba(255,255,255,0.07); --text: #f2ede6;
+            --muted: #7a756c; --dim: #3d3a35;
+            --display: 'Playfair Display', Georgia, serif;
+            --body: 'DM Sans', sans-serif;
+            --ease: cubic-bezier(0.25,0.46,0.45,0.94);
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body { background: var(--bg); color: var(--text); font-family: var(--body); font-weight: 300; line-height: 1.7; -webkit-font-smoothing: antialiased; cursor: none; }
+        a { color: inherit; text-decoration: none; transition: color 0.3s var(--ease); }
+        ul { list-style: none; }
+        h1,h2,h3,h4 { font-family: var(--display); font-weight: 400; line-height: 1.15; }
+        h1 { font-size: clamp(3rem,7vw,6.5rem); }
+        h2 { font-size: clamp(1.8rem,3.5vw,3.2rem); }
+        h3 { font-size: clamp(1.1rem,2vw,1.6rem); }
+        p  { color: var(--muted); font-size: 0.93rem; line-height: 1.85; }
+
+        /* Cursor */
+        #cursorDot, #cursorRing { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9999; }
+        .cursor__dot { width: 8px; height: 8px; background: var(--gold); border-radius: 50%; transform: translate(-50%,-50%); }
+        .cursor__ring { width: 36px; height: 36px; border: 1px solid rgba(201,169,110,0.5); border-radius: 50%; transform: translate(-50%,-50%); transition: width 0.3s, height 0.3s; }
+
+        /* Buttons */
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.85rem 2.2rem; font-family: var(--body); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; border-radius: 2px; transition: all 0.3s var(--ease); cursor: pointer; border: none; white-space: nowrap; }
+        .btn--primary { background: var(--gold); color: #08090a; }
+        .btn--primary:hover { background: var(--gold-light); transform: translateY(-2px); box-shadow: 0 12px 32px rgba(201,169,110,0.25); }
+        .btn--outline { background: transparent; color: var(--gold); border: 1px solid var(--gold-border); }
+        .btn--outline:hover { border-color: var(--gold); background: var(--gold-dim); transform: translateY(-2px); }
+        .btn--ghost { background: rgba(255,255,255,0.05); color: var(--text); border: 1px solid var(--border); }
+        .btn--ghost:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+
+        .eyebrow { display: block; font-family: var(--body); font-size: 0.68rem; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.8rem; }
+        .link-arrow { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-top: 1.2rem; transition: gap 0.3s var(--ease), color 0.3s; }
+        .link-arrow:hover { gap: 0.9rem; color: var(--gold-light); }
+
+        /* Navbar */
+        .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; display: flex; align-items: center; justify-content: space-between; padding: 2rem 5rem; transition: all 0.4s var(--ease); }
+        .navbar.scrolled { padding: 1.1rem 5rem; background: rgba(8,9,10,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
+        .navbar__logo { font-family: var(--display); font-size: 1.35rem; display: flex; align-items: center; gap: 0.6rem; }
+        .navbar__logo-mark { color: var(--gold); font-size: 0.8rem; }
+        .navbar__logo:hover { color: var(--gold-light); }
+        .navbar__links { display: flex; align-items: center; gap: 3rem; }
+        .navbar__links a { font-size: 0.72rem; font-weight: 400; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); position: relative; padding-bottom: 3px; }
+        .navbar__links a::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 1px; background: var(--gold); transition: width 0.3s var(--ease); }
+        .navbar__links a:hover, .navbar__links a.active { color: var(--text); }
+        .navbar__links a:hover::after, .navbar__links a.active::after { width: 100%; }
+        .navbar__cta { display: flex; align-items: center; gap: 1.5rem; }
+        .navbar__cta-link { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); transition: color 0.3s; }
+        .navbar__cta-link:hover { color: var(--gold); }
+        .navbar__toggle { display: none; flex-direction: column; gap: 6px; background: none; border: none; cursor: pointer; padding: 4px; }
+        .navbar__toggle span { display: block; width: 26px; height: 1px; background: var(--text); transition: all 0.3s; }
+
+        /* Hero */
+        .hero { position: relative; min-height: 70vh; display: flex; align-items: flex-end; padding: 6rem 5rem; overflow: hidden; }
+        .hero__bg { position: absolute; inset: 0; background: url('https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=2000&q=85') center/cover; animation: heroZoom 14s var(--ease) forwards; transform: scale(1.05); }
+        @keyframes heroZoom { to { transform: scale(1); } }
+        .hero__overlay { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(8,9,10,0.85) 0%, rgba(8,9,10,0.4) 60%, rgba(8,9,10,0.7) 100%); }
+        .hero__grain { position: absolute; inset: 0; opacity: 0.04; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+        .hero__content { position: relative; max-width: 700px; animation: fadeUp 1s var(--ease) 0.2s both; }
+        .hero__content h1 { margin: 0.5rem 0 1rem; }
+        .hero__content h1 em { font-style: italic; color: var(--gold); }
+        .hero__content p { font-size: 1.05rem; max-width: 500px; }
+
+        /* Tab Nav */
+        .tab-nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 5rem; position: sticky; top: 0; z-index: 100; }
+        .tab-nav__inner { max-width: 1300px; margin: 0 auto; display: flex; gap: 0; overflow-x: auto; }
+        .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; padding: 1.3rem 2rem; font-family: var(--body); font-size: 0.72rem; font-weight: 400; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); cursor: pointer; white-space: nowrap; transition: all 0.3s var(--ease); }
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+        /* Tab Panels */
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* ─── SPA SECTION ─── */
+        .spa-hero { padding: 7rem 5rem; max-width: 1300px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
+        .spa-hero__text h2 { margin: 0.5rem 0 1.5rem; }
+        .spa-hero__text p { margin-bottom: 1rem; font-size: 0.96rem; }
+        .spa-hero__img { height: 520px; border-radius: 2px; background: url('https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=900&q=80') center/cover; position: relative; }
+        .spa-hero__img::after { content: ''; position: absolute; inset: 0; border-radius: 2px; box-shadow: inset 0 0 60px rgba(201,169,110,0.08); }
+
+        .spa-treatments { padding: 0 5rem 7rem; max-width: 1300px; margin: 0 auto; }
+        .spa-treatments h3 { font-size: 1.5rem; margin-bottom: 2.5rem; }
+        .treatments-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+        .treatment { background: var(--card); padding: 2.5rem 2rem; transition: background 0.3s; }
+        .treatment:hover { background: var(--surface); }
+        .treatment__duration { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.8rem; display: block; }
+        .treatment h4 { font-family: var(--display); font-size: 1.1rem; font-weight: 400; margin-bottom: 0.5rem; }
+        .treatment p { font-size: 0.82rem; line-height: 1.75; margin-bottom: 1rem; }
+        .treatment__price { font-family: var(--display); font-size: 1.4rem; color: var(--gold); }
+
+        /* ─── DINING SECTION ─── */
+        .dining-intro { padding: 7rem 5rem; max-width: 1300px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; direction: rtl; }
+        .dining-intro > * { direction: ltr; }
+        .dining-intro__img { height: 520px; border-radius: 2px; background: url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=900&q=80') center/cover; }
+        .dining-intro__text h2 { margin: 0.5rem 0 1.5rem; }
+        .dining-intro__text p { margin-bottom: 1rem; font-size: 0.96rem; }
+
+        .dining-venues { padding: 0 5rem 7rem; max-width: 1300px; margin: 0 auto; }
+        .venues-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        .venue-card { background: var(--card); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; transition: transform 0.4s var(--ease), box-shadow 0.4s; }
+        .venue-card:hover { transform: translateY(-5px); box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+        .venue-card__img { height: 200px; background-size: cover; background-position: center; transition: transform 0.5s var(--ease); }
+        .venue-card:hover .venue-card__img { transform: scale(1.04); }
+        .venue-card__body { padding: 1.5rem; }
+        .venue-card__tag { font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); display: block; margin-bottom: 0.5rem; }
+        .venue-card__body h4 { font-family: var(--display); font-size: 1.2rem; font-weight: 400; margin-bottom: 0.5rem; }
+        .venue-card__body p { font-size: 0.83rem; line-height: 1.75; }
+        .venue-card__hours { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--dim); }
+
+        /* ─── POOL SECTION ─── */
+        .pool-hero { position: relative; height: 60vh; min-height: 500px; overflow: hidden; display: flex; align-items: flex-end; padding: 4rem 5rem; }
+        .pool-hero__bg { position: absolute; inset: 0; background: url('https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1800&q=80') center/cover; }
+        .pool-hero__overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(8,9,10,0.9) 0%, rgba(8,9,10,0.1) 60%); }
+        .pool-hero__content { position: relative; max-width: 600px; }
+        .pool-hero__content h2 { margin: 0.5rem 0 1rem; }
+
+        .pool-features { padding: 6rem 5rem; max-width: 1300px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+        .pool-feature { background: var(--card); padding: 2.5rem 2rem; text-align: center; transition: background 0.3s; }
+        .pool-feature:hover { background: var(--surface); }
+        .pool-feature__icon { font-size: 2rem; color: var(--gold); display: block; margin-bottom: 1rem; }
+        .pool-feature h4 { font-family: var(--display); font-size: 1.1rem; font-weight: 400; margin-bottom: 0.5rem; }
+        .pool-feature p { font-size: 0.82rem; }
+
+        /* ─── FITNESS SECTION ─── */
+        .fitness-layout { padding: 7rem 5rem; max-width: 1300px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
+        .fitness-layout__img { height: 500px; border-radius: 2px; background: url('https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=900&q=80') center/cover; }
+        .fitness-layout__text h2 { margin: 0.5rem 0 1.5rem; }
+        .fitness-layout__text p { margin-bottom: 1rem; font-size: 0.96rem; }
+        .fitness-list { margin-top: 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 2rem; }
+        .fitness-list li { font-size: 0.85rem; color: var(--muted); display: flex; align-items: center; gap: 0.5rem; }
+        .fitness-list li::before { content: '✦'; color: var(--gold); font-size: 0.6rem; flex-shrink: 0; }
+
+        /* ─── CTA STRIP ─── */
+        .amenity-cta { padding: 7rem 5rem; text-align: center; background: linear-gradient(rgba(8,9,10,0.78), rgba(8,9,10,0.78)), url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1600&q=80') center/cover fixed; }
+        .amenity-cta h2 { margin: 0.5rem 0 1rem; }
+        .amenity-cta p { margin-bottom: 2rem; font-size: 1rem; max-width: 450px; margin-left: auto; margin-right: auto; }
+        .amenity-cta__actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+        /* Footer */
+        .footer { background: var(--surface); border-top: 1px solid var(--border); padding: 6rem 5rem 2.5rem; }
+        .footer__inner { max-width: 1300px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 4rem; margin-bottom: 4rem; }
+        .footer__brand-logo { font-family: var(--display); font-size: 1.5rem; color: var(--gold); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.2rem; }
+        .footer__brand p { font-size: 0.85rem; color: var(--muted); max-width: 240px; line-height: 1.85; margin-bottom: 1.5rem; }
+        .footer__social { display: flex; gap: 0.8rem; }
+        .footer__social a { width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: var(--muted); transition: all 0.3s; }
+        .footer__social a:hover { border-color: var(--gold); color: var(--gold); }
+        .footer__col h4 { font-family: var(--body); font-size: 0.65rem; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); margin-bottom: 1.4rem; }
+        .footer__col ul { display: flex; flex-direction: column; gap: 0.7rem; }
+        .footer__col a { font-size: 0.85rem; color: var(--muted); transition: color 0.3s; }
+        .footer__col a:hover { color: var(--gold-light); }
+        .footer__bottom { max-width: 1300px; margin: 0 auto; border-top: 1px solid var(--border); padding-top: 2rem; display: flex; align-items: center; justify-content: space-between; }
+        .footer__bottom p { font-size: 0.75rem; color: var(--dim); }
+
+        /* Animations */
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: translateY(0); } }
+        .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.8s var(--ease), transform 0.8s var(--ease); }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+        ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 3px; } ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+        /* Responsive */
+        @media (max-width: 1000px) {
+            .spa-hero, .dining-intro, .fitness-layout { grid-template-columns: 1fr; gap: 3rem; }
+            .dining-intro { direction: ltr; }
+            .treatments-grid, .venues-grid { grid-template-columns: 1fr 1fr; }
+            .pool-features { grid-template-columns: 1fr 1fr; }
+            .footer__inner { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 768px) {
+            .navbar { padding: 1.5rem; } .navbar.scrolled { padding: 1rem 1.5rem; }
+            .navbar__links, .navbar__cta { display: none; }
+            .navbar__toggle { display: flex; }
+            .hero, .spa-hero, .spa-treatments, .dining-intro, .dining-venues,
+            .pool-hero, .pool-features, .fitness-layout, .amenity-cta, .footer { padding-left: 1.5rem; padding-right: 1.5rem; }
+            .tab-nav { padding: 0 1.5rem; }
+            .treatments-grid, .venues-grid, .pool-features { grid-template-columns: 1fr; }
+            .fitness-list { grid-template-columns: 1fr; }
+            .footer__inner { grid-template-columns: 1fr; }
+            .footer__bottom { flex-direction: column; gap: 0.8rem; text-align: center; }
+            .amenity-cta { background-attachment: scroll; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="cursorDot"><div class="cursor__dot"></div></div>
+<div id="cursorRing"><div class="cursor__ring"></div></div>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+    <a th:href="@{/}" class="navbar__logo">
+        <span class="navbar__logo-mark">✦</span>
+        <span th:text="${hotelName}">The Grand Horizon</span>
+    </a>
+    <ul class="navbar__links">
+        <li><a th:href="@{/}">Home</a></li>
+        <li><a th:href="@{/rooms}">Rooms</a></li>
+        <li><a th:href="@{/amenities}" class="active">Amenities</a></li>
+        <li><a th:href="@{/gallery}">Gallery</a></li>
+        <li><a th:href="@{/about}">About</a></li>
+        <li><a th:href="@{/contact}">Contact</a></li>
+    </ul>
+    <div class="navbar__cta">
+        <a th:href="@{/booking/lookup}" class="navbar__cta-link">My Booking</a>
+        <a th:href="@{/booking}" class="btn btn--primary">Reserve Now</a>
+    </div>
+    <button class="navbar__toggle" id="navToggle"><span></span><span></span><span></span></button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero__bg"></div>
+    <div class="hero__overlay"></div>
+    <div class="hero__grain"></div>
+    <div class="hero__content">
+        <span class="eyebrow">Resort Amenities</span>
+        <h1>Indulge in <em>Every Pleasure</em></h1>
+        <p>From restorative spa rituals to culinary artistry — every amenity is crafted to elevate your stay.</p>
+    </div>
+</section>
+
+<!-- TAB NAVIGATION -->
+<div class="tab-nav" id="tabNav">
+    <div class="tab-nav__inner">
+        <button class="tab-btn active" data-tab="spa">Serenity Spa</button>
+        <button class="tab-btn" data-tab="dining">Fine Dining</button>
+        <button class="tab-btn" data-tab="pool">Pools &amp; Recreation</button>
+        <button class="tab-btn" data-tab="fitness">Fitness &amp; Wellness</button>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════
+     TAB: SPA
+═══════════════════════════════ -->
+<div class="tab-panel active" id="tab-spa">
+
+    <div class="spa-hero">
+        <div class="spa-hero__text reveal">
+            <span class="eyebrow">Wellness &amp; Restoration</span>
+            <h2>The Serenity <em>Spa</em></h2>
+            <p>A sanctuary dedicated entirely to your wellbeing. Our therapists draw from ancient traditions and modern science to craft treatments that restore, renew, and revive.</p>
+            <p>Open daily from 8:00 AM to 9:00 PM. Advance booking recommended for couples treatments and full-day retreats.</p>
+            <a th:href="@{/booking}" class="link-arrow">Book a Treatment →</a>
+        </div>
+        <div class="spa-hero__img reveal"></div>
+    </div>
+
+    <div class="spa-treatments reveal">
+        <h3>Featured Treatments</h3>
+        <div class="treatments-grid">
+            <div class="treatment">
+                <span class="treatment__duration">90 minutes</span>
+                <h4>Grand Horizon Ritual</h4>
+                <p>Our signature full-body experience combining hot stone massage, salt scrub, and a hydrating facial wrap using locally sourced botanicals.</p>
+                <span class="treatment__price">$280</span>
+            </div>
+            <div class="treatment">
+                <span class="treatment__duration">60 minutes</span>
+                <h4>Deep Tissue Renewal</h4>
+                <p>Targeted pressure therapy to release chronic muscle tension, improve circulation, and restore mobility — ideal after long travel.</p>
+                <span class="treatment__price">$180</span>
+            </div>
+            <div class="treatment">
+                <span class="treatment__duration">75 minutes</span>
+                <h4>Couples' Harmony</h4>
+                <p>A shared journey through aromatic steam, side-by-side massage, and private plunge pool access. Champagne included.</p>
+                <span class="treatment__price">$420</span>
+            </div>
+            <div class="treatment">
+                <span class="treatment__duration">45 minutes</span>
+                <h4>Luminous Facial</h4>
+                <p>A brightening treatment using marine collagen and vitamin C serums, tailored to your skin type for an immediate glow.</p>
+                <span class="treatment__price">$140</span>
+            </div>
+            <div class="treatment">
+                <span class="treatment__duration">30 minutes</span>
+                <h4>Himalayan Salt Float</h4>
+                <p>Complete sensory deprivation in a mineral-rich float pool, allowing the nervous system to reach profound states of rest.</p>
+                <span class="treatment__price">$95</span>
+            </div>
+            <div class="treatment">
+                <span class="treatment__duration">Full Day</span>
+                <h4>Serenity Retreat</h4>
+                <p>A curated full-day wellness journey including breakfast, four treatments, access to all thermal facilities, and a private garden lunch.</p>
+                <span class="treatment__price">$680</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════
+     TAB: DINING
+═══════════════════════════════ -->
+<div class="tab-panel" id="tab-dining">
+
+    <div class="dining-intro">
+        <div class="dining-intro__img reveal"></div>
+        <div class="dining-intro__text reveal">
+            <span class="eyebrow">Culinary Excellence</span>
+            <h2>Dining as <em>an Art Form</em></h2>
+            <p>Our kitchens are led by Executive Chef Marcus Chen, whose philosophy is simple: exceptional food is a conversation between the land and the table. Every dish tells the story of where it came from.</p>
+            <p>From casual poolside bites to Michelin-starred tasting menus, every meal at The Grand Horizon is a memory in the making.</p>
+            <a th:href="@{/contact}" class="link-arrow">Make a Reservation →</a>
+        </div>
+    </div>
+
+    <div class="dining-venues reveal">
+        <div class="venues-grid">
+            <div class="venue-card">
+                <div class="venue-card__img" style="background-image:url('https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=800&q=80')"></div>
+                <div class="venue-card__body">
+                    <span class="venue-card__tag">Signature Restaurant</span>
+                    <h4>Horizon</h4>
+                    <p>Our flagship fine dining experience. A 12-course tasting menu celebrating the finest seasonal produce, paired with a 2,000-bottle wine list.</p>
+                    <div class="venue-card__hours">Dinner only · Tue–Sun · 6:30 PM – 10:30 PM</div>
+                </div>
+            </div>
+            <div class="venue-card">
+                <div class="venue-card__img" style="background-image:url('https://images.unsplash.com/photo-1559329007-40df8a9345d8?w=800&q=80')"></div>
+                <div class="venue-card__body">
+                    <span class="venue-card__tag">Rooftop Bar</span>
+                    <h4>The Skyline</h4>
+                    <p>Craft cocktails and small plates under open skies. The best sunset views in the resort, with live jazz every Friday and Saturday evening.</p>
+                    <div class="venue-card__hours">Daily · 4:00 PM – 1:00 AM</div>
+                </div>
+            </div>
+            <div class="venue-card">
+                <div class="venue-card__img" style="background-image:url('https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?w=800&q=80')"></div>
+                <div class="venue-card__body">
+                    <span class="venue-card__tag">All-Day Terrace</span>
+                    <h4>The Garden Table</h4>
+                    <p>Relaxed all-day dining surrounded by manicured gardens. Breakfast spreads, weekend brunches, and light lunches — always with fresh seasonal juice.</p>
+                    <div class="venue-card__hours">Daily · 7:00 AM – 4:00 PM</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════
+     TAB: POOL
+═══════════════════════════════ -->
+<div class="tab-panel" id="tab-pool">
+
+    <div class="pool-hero">
+        <div class="pool-hero__bg"></div>
+        <div class="pool-hero__overlay"></div>
+        <div class="pool-hero__content reveal">
+            <span class="eyebrow">Recreation</span>
+            <h2>Swim at the <em>Edge of the World</em></h2>
+            <p>Our infinity pool merges seamlessly with the horizon — a 50-metre stretch of heated water designed to make you forget where the resort ends and the sky begins.</p>
+        </div>
+    </div>
+
+    <div class="pool-features reveal">
+        <div class="pool-feature">
+            <span class="pool-feature__icon">◎</span>
+            <h4>Infinity Pool</h4>
+            <p>50m heated saltwater pool with horizon-edge views. Open year-round.</p>
+        </div>
+        <div class="pool-feature">
+            <span class="pool-feature__icon">⬡</span>
+            <h4>Children's Pool</h4>
+            <p>A dedicated shallow pool with lifeguard supervision and water features.</p>
+        </div>
+        <div class="pool-feature">
+            <span class="pool-feature__icon">✦</span>
+            <h4>Private Cabanas</h4>
+            <p>12 poolside cabanas with butler service, cooling mist, and chilled towels.</p>
+        </div>
+        <div class="pool-feature">
+            <span class="pool-feature__icon">◈</span>
+            <h4>Beach Club</h4>
+            <p>Direct beach access with snorkelling, kayaking, and sunset sailing.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════
+     TAB: FITNESS
+═══════════════════════════════ -->
+<div class="tab-panel" id="tab-fitness">
+
+    <div class="fitness-layout">
+        <div class="fitness-layout__img reveal"></div>
+        <div class="fitness-layout__text reveal">
+            <span class="eyebrow">Health &amp; Vitality</span>
+            <h2>A Body in <em>Balance</em></h2>
+            <p>Our 800 m² fitness centre is equipped with state-of-the-art Technogym machines and offers a full schedule of group classes — from sunrise yoga on the terrace to high-intensity evening sessions.</p>
+            <p>Personal trainers are available for one-to-one sessions by appointment. Complimentary for villa and penthouse guests.</p>
+            <ul class="fitness-list">
+                <li>Technogym cardio &amp; weights</li>
+                <li>Reformer Pilates studio</li>
+                <li>Sunrise terrace yoga</li>
+                <li>Personal training sessions</li>
+                <li>Nutritional consultations</li>
+                <li>Recovery &amp; stretching zone</li>
+                <li>Sauna &amp; steam room</li>
+                <li>Cold plunge pool</li>
+            </ul>
+            <a th:href="@{/booking}" class="link-arrow">Enquire About Classes →</a>
+        </div>
+    </div>
+</div>
+
+<!-- CTA -->
+<section class="amenity-cta">
+    <span class="eyebrow">Begin Your Journey</span>
+    <h2>Reserve &amp; Experience It All</h2>
+    <p>Every amenity is included in your stay. Book now for the best rates.</p>
+    <div class="amenity-cta__actions">
+        <a th:href="@{/booking}" class="btn btn--primary">Reserve Your Stay</a>
+        <a th:href="@{/rooms}" class="btn btn--ghost">Browse Rooms</a>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="footer__inner">
+        <div class="footer__brand">
+            <div class="footer__brand-logo"><span style="font-size:0.9rem;">✦</span><span th:text="${hotelName}">The Grand Horizon</span></div>
+            <p>A sanctuary of refined luxury, nestled where the earth meets the sky.</p>
+            <div class="footer__social"><a href="#">In</a><a href="#">Fb</a><a href="#">Tw</a><a href="#">Pi</a></div>
+        </div>
+        <div class="footer__col"><h4>Explore</h4><ul><li><a th:href="@{/rooms}">Rooms &amp; Suites</a></li><li><a th:href="@{/amenities}">Amenities</a></li><li><a th:href="@{/gallery}">Gallery</a></li><li><a th:href="@{/about}">Our Story</a></li><li><a th:href="@{/contact}">Contact</a></li></ul></div>
+        <div class="footer__col"><h4>Stay</h4><ul><li><a th:href="@{/booking}">Book a Room</a></li><li><a th:href="@{/booking/lookup}">My Booking</a></li><li><a href="#">Special Offers</a></li><li><a href="#">Events</a></li></ul></div>
+        <div class="footer__col"><h4>Contact</h4><ul><li><a href="#">123 Horizon Boulevard</a></li><li><a href="#">Coastal City, ST 00000</a></li><li><a href="tel:+18000000000">+1 (800) 000-0000</a></li><li><a href="mailto:hello@grandhorizon.com">hello@grandhorizon.com</a></li></ul></div>
+    </div>
+    <div class="footer__bottom">
+        <p>&copy; 2026 <span th:text="${hotelName}">The Grand Horizon</span>. All rights reserved.</p>
+        <p>Privacy Policy · Terms of Service</p>
+    </div>
+</footer>
+
+<script>
+    // Cursor
+    const dot = document.getElementById('cursorDot'), ring = document.getElementById('cursorRing');
+    let mx=0,my=0,rx=0,ry=0;
+    document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; dot.style.left=mx+'px'; dot.style.top=my+'px'; });
+    (function anim(){ rx+=(mx-rx)*0.12; ry+=(my-ry)*0.12; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(anim); })();
+
+    // Navbar
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', scrollY > 60), { passive: true });
+    document.getElementById('navToggle')?.addEventListener('click', () => navbar.classList.toggle('open'));
+
+    // Tabs
+    const tabBtns   = document.querySelectorAll('.tab-btn');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabPanels.forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+            // Re-trigger reveals in newly shown panel
+            document.querySelectorAll('#tab-' + btn.dataset.tab + ' .reveal').forEach(el => {
+                if (!el.classList.contains('visible')) el.classList.add('visible');
+            });
+        });
+    });
+
+    // Scroll reveal
+    const reveals = document.querySelectorAll('.reveal');
+    if ('IntersectionObserver' in window) {
+        const obs = new IntersectionObserver(entries => {
+            entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+        }, { threshold: 0.1 });
+        reveals.forEach(el => obs.observe(el));
+    } else { reveals.forEach(el => el.classList.add('visible')); }
+</script>
+</body>
+</html>

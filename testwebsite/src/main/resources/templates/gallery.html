@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${hotelName} + ' — Gallery'">The Grand Horizon — Gallery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+    <style>
+        /* ── Variables & Reset ── */
+        :root{
+            --gold:#c9a96e;--gold-light:#e8d5b0;--gold-dim:rgba(201,169,110,0.12);
+            --gold-border:rgba(201,169,110,0.25);--bg:#08090a;--surface:#0f1012;
+            --card:#141618;--border:rgba(255,255,255,0.07);--text:#f2ede6;
+            --muted:#7a756c;--dim:#3d3a35;
+            --display:'Playfair Display',Georgia,serif;--body:'DM Sans',sans-serif;
+            --ease:cubic-bezier(0.25,0.46,0.45,0.94);
+        }
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        html{scroll-behavior:smooth;}
+        body{background:var(--bg);color:var(--text);font-family:var(--body);font-weight:300;line-height:1.7;-webkit-font-smoothing:antialiased;cursor:none;}
+        a{color:inherit;text-decoration:none;transition:color 0.3s var(--ease);}
+        ul{list-style:none;}
+        h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.15;}
+        h1{font-size:clamp(3rem,7vw,6.5rem);}
+        h2{font-size:clamp(1.8rem,3.5vw,3.2rem);}
+        p{color:var(--muted);font-size:0.93rem;line-height:1.85;}
+
+        /* ── Cursor ── */
+        #cursorDot,#cursorRing{position:fixed;top:0;left:0;pointer-events:none;z-index:9999;}
+        .cursor__dot{width:8px;height:8px;background:var(--gold);border-radius:50%;transform:translate(-50%,-50%);}
+        .cursor__ring{width:36px;height:36px;border:1px solid rgba(201,169,110,0.5);border-radius:50%;transform:translate(-50%,-50%);transition:width 0.3s,height 0.3s,opacity 0.3s;}
+
+        /* ── Buttons ── */
+        .btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.85rem 2.2rem;font-family:var(--body);font-size:0.75rem;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;border-radius:2px;transition:all 0.3s var(--ease);cursor:pointer;border:none;white-space:nowrap;}
+        .btn--primary{background:var(--gold);color:#08090a;}
+        .btn--primary:hover{background:var(--gold-light);transform:translateY(-2px);box-shadow:0 12px 32px rgba(201,169,110,0.25);}
+        .btn--outline{background:transparent;color:var(--gold);border:1px solid var(--gold-border);}
+        .btn--outline:hover{border-color:var(--gold);background:var(--gold-dim);transform:translateY(-2px);}
+
+        .eyebrow{display:block;font-family:var(--body);font-size:0.68rem;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);margin-bottom:0.8rem;}
+
+        /* ── Navbar ── */
+        .navbar{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;justify-content:space-between;padding:2rem 5rem;transition:all 0.4s var(--ease);}
+        .navbar.scrolled{padding:1.1rem 5rem;background:rgba(8,9,10,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+        .navbar__logo{font-family:var(--display);font-size:1.35rem;display:flex;align-items:center;gap:0.6rem;}
+        .navbar__logo-mark{color:var(--gold);font-size:0.8rem;}
+        .navbar__logo:hover{color:var(--gold-light);}
+        .navbar__links{display:flex;align-items:center;gap:3rem;}
+        .navbar__links a{font-size:0.72rem;font-weight:400;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);position:relative;padding-bottom:3px;}
+        .navbar__links a::after{content:'';position:absolute;bottom:0;left:0;width:0;height:1px;background:var(--gold);transition:width 0.3s var(--ease);}
+        .navbar__links a:hover,.navbar__links a.active{color:var(--text);}
+        .navbar__links a:hover::after,.navbar__links a.active::after{width:100%;}
+        .navbar__cta{display:flex;align-items:center;gap:1.5rem;}
+        .navbar__cta-link{font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);transition:color 0.3s;}
+        .navbar__cta-link:hover{color:var(--gold);}
+        .navbar__toggle{display:none;flex-direction:column;gap:6px;background:none;border:none;cursor:pointer;padding:4px;}
+        .navbar__toggle span{display:block;width:26px;height:1px;background:var(--text);transition:all 0.3s;}
+
+        /* ── Hero ── */
+        .hero{position:relative;min-height:65vh;display:flex;align-items:flex-end;padding:6rem 5rem;overflow:hidden;}
+        .hero__bg{position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=2000&q=85') center/cover;transform:scale(1.05);animation:heroZoom 14s var(--ease) forwards;}
+        @keyframes heroZoom{to{transform:scale(1);}}
+        .hero__overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(8,9,10,0.9) 0%,rgba(8,9,10,0.4) 55%,rgba(8,9,10,0.75) 100%);}
+        .hero__grain{position:absolute;inset:0;opacity:0.04;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+        .hero__content{position:relative;animation:fadeUp 1s var(--ease) 0.2s both;}
+        .hero__content h1{margin:0.5rem 0 1rem;}
+        .hero__content h1 em{font-style:italic;color:var(--gold);}
+        .hero__content p{font-size:1rem;max-width:480px;}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:translateY(0);}}
+
+        /* ── Filter Tabs ── */
+        .filter-tabs{background:var(--surface);border-bottom:1px solid var(--border);padding:0 5rem;position:sticky;top:0;z-index:100;}
+        .filter-tabs__inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;}
+        .filter-tabs__btns{display:flex;overflow-x:auto;scrollbar-width:none;}
+        .filter-tabs__btns::-webkit-scrollbar{display:none;}
+        .tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:1.3rem 1.8rem;font-family:var(--body);font-size:0.72rem;font-weight:400;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all 0.3s var(--ease);}
+        .tab-btn:hover{color:var(--text);}
+        .tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
+        .filter-tabs__count{font-size:0.75rem;color:var(--muted);white-space:nowrap;padding-left:2rem;}
+        .filter-tabs__count strong{color:var(--text);}
+
+        /* ── Masonry Grid ── */
+        .gallery-section{padding:3rem 5rem 8rem;max-width:1400px;margin:0 auto;}
+
+        .masonry{columns:4 280px;column-gap:1rem;}
+
+        .gallery-item{
+            break-inside:avoid;
+            margin-bottom:1rem;
+            border-radius:2px;
+            overflow:hidden;
+            cursor:pointer;
+            position:relative;
+            transition:transform 0.4s var(--ease),box-shadow 0.4s;
+        }
+        .gallery-item:hover{transform:translateY(-4px);box-shadow:0 20px 50px rgba(0,0,0,0.5);}
+        .gallery-item.hidden{display:none;}
+
+        .gallery-item__img{
+            width:100%;
+            display:block;
+            background-size:cover;
+            background-position:center;
+            transition:transform 0.6s var(--ease);
+        }
+        .gallery-item:hover .gallery-item__img{transform:scale(1.04);}
+
+        /* Varied heights via nth-child patterns */
+        .gallery-item:nth-child(5n+1) .gallery-item__img{padding-bottom:130%;}
+        .gallery-item:nth-child(5n+2) .gallery-item__img{padding-bottom:75%;}
+        .gallery-item:nth-child(5n+3) .gallery-item__img{padding-bottom:100%;}
+        .gallery-item:nth-child(5n+4) .gallery-item__img{padding-bottom:60%;}
+        .gallery-item:nth-child(5n+5) .gallery-item__img{padding-bottom:85%;}
+
+        .gallery-item__overlay{
+            position:absolute;inset:0;
+            background:linear-gradient(to top,rgba(8,9,10,0.88) 0%,transparent 55%);
+            opacity:0;
+            transition:opacity 0.35s var(--ease);
+            display:flex;flex-direction:column;justify-content:flex-end;
+            padding:1.4rem;gap:0.25rem;
+        }
+        .gallery-item:hover .gallery-item__overlay{opacity:1;}
+
+        .gallery-item__caption{font-family:var(--display);font-size:1rem;font-style:italic;color:var(--text);}
+        .gallery-item__cat{font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:500;}
+
+        .gallery-item__zoom{
+            position:absolute;top:1rem;right:1rem;
+            width:36px;height:36px;
+            background:rgba(8,9,10,0.6);backdrop-filter:blur(8px);
+            border:1px solid rgba(255,255,255,0.12);border-radius:50%;
+            display:flex;align-items:center;justify-content:center;
+            font-size:1rem;color:var(--text);
+            opacity:0;transform:scale(0.7);
+            transition:opacity 0.3s,transform 0.3s var(--ease);
+        }
+        .gallery-item:hover .gallery-item__zoom{opacity:1;transform:scale(1);}
+
+        /* ── Lightbox ── */
+        .lightbox{
+            position:fixed;inset:0;z-index:2000;
+            background:rgba(5,6,7,0.97);backdrop-filter:blur(16px);
+            display:flex;align-items:center;justify-content:center;
+            opacity:0;pointer-events:none;
+            transition:opacity 0.35s var(--ease);
+        }
+        .lightbox.open{opacity:1;pointer-events:all;}
+
+        .lightbox__close{
+            position:fixed;top:1.8rem;right:2rem;
+            background:rgba(255,255,255,0.06);border:1px solid var(--border);
+            color:var(--muted);font-size:1rem;
+            width:42px;height:42px;border-radius:50%;
+            display:flex;align-items:center;justify-content:center;
+            cursor:pointer;transition:all 0.3s;z-index:2001;
+        }
+        .lightbox__close:hover{background:rgba(255,255,255,0.12);color:var(--text);}
+
+        .lightbox__nav{
+            position:fixed;top:50%;transform:translateY(-50%);
+            background:rgba(255,255,255,0.05);border:1px solid var(--border);
+            color:var(--muted);font-size:1.8rem;
+            width:52px;height:52px;border-radius:50%;
+            display:flex;align-items:center;justify-content:center;
+            cursor:pointer;transition:all 0.3s;z-index:2001;line-height:1;
+        }
+        .lightbox__nav:hover{background:var(--gold-dim);border-color:var(--gold);color:var(--gold);}
+        .lightbox__nav--prev{left:2rem;}
+        .lightbox__nav--next{right:2rem;}
+
+        .lightbox__inner{
+            max-width:88vw;max-height:88vh;
+            display:flex;flex-direction:column;align-items:center;gap:1.2rem;
+        }
+
+        .lightbox__img{
+            max-width:100%;max-height:80vh;
+            object-fit:contain;border-radius:2px;
+            box-shadow:0 30px 100px rgba(0,0,0,0.7);
+            transition:opacity 0.25s var(--ease);
+        }
+        .lightbox__img.fading{opacity:0;}
+
+        .lightbox__meta{text-align:center;}
+        .lightbox__caption{font-family:var(--display);font-style:italic;font-size:1.1rem;color:var(--text);margin-bottom:0.3rem;}
+        .lightbox__cat{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);}
+        .lightbox__counter{font-size:0.72rem;color:var(--muted);margin-top:0.2rem;}
+
+        /* ── CTA Strip ── */
+        .gallery-cta{
+            padding:7rem 5rem;text-align:center;
+            background:linear-gradient(rgba(8,9,10,0.76),rgba(8,9,10,0.76)),
+                url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1600&q=80') center/cover fixed;
+        }
+        .gallery-cta h2{margin:0.5rem 0 1rem;}
+        .gallery-cta p{margin-bottom:2rem;font-size:1rem;max-width:440px;margin-left:auto;margin-right:auto;}
+        .gallery-cta__actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+
+        /* ── Footer ── */
+        .footer{background:var(--surface);border-top:1px solid var(--border);padding:6rem 5rem 2.5rem;}
+        .footer__inner{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:4rem;margin-bottom:4rem;}
+        .footer__brand-logo{font-family:var(--display);font-size:1.5rem;color:var(--gold);display:flex;align-items:center;gap:0.5rem;margin-bottom:1.2rem;}
+        .footer__brand p{font-size:0.85rem;color:var(--muted);max-width:240px;line-height:1.85;margin-bottom:1.5rem;}
+        .footer__social{display:flex;gap:0.8rem;}
+        .footer__social a{width:36px;height:36px;border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--muted);transition:all 0.3s;}
+        .footer__social a:hover{border-color:var(--gold);color:var(--gold);}
+        .footer__col h4{font-family:var(--body);font-size:0.65rem;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);margin-bottom:1.4rem;}
+        .footer__col ul{display:flex;flex-direction:column;gap:0.7rem;}
+        .footer__col a{font-size:0.85rem;color:var(--muted);transition:color 0.3s;}
+        .footer__col a:hover{color:var(--gold-light);}
+        .footer__bottom{max-width:1300px;margin:0 auto;border-top:1px solid var(--border);padding-top:2rem;display:flex;align-items:center;justify-content:space-between;}
+        .footer__bottom p{font-size:0.75rem;color:var(--dim);}
+
+        /* ── Animations ── */
+        .reveal{opacity:0;transform:translateY(24px);transition:opacity 0.7s var(--ease),transform 0.7s var(--ease);}
+        .reveal.visible{opacity:1;transform:translateY(0);}
+        ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px;}::-webkit-scrollbar-thumb:hover{background:var(--gold);}
+
+        /* ── Responsive ── */
+        @media(max-width:1100px){
+            .masonry{columns:3 220px;}
+            .footer__inner{grid-template-columns:1fr 1fr;}
+        }
+        @media(max-width:768px){
+            .navbar,.navbar.scrolled{padding-left:1.5rem;padding-right:1.5rem;}
+            .navbar__links,.navbar__cta{display:none;}
+            .navbar__toggle{display:flex;}
+            .hero,.gallery-section,.gallery-cta,.footer{padding-left:1.5rem;padding-right:1.5rem;}
+            .filter-tabs{padding:0 1.5rem;}
+            .filter-tabs__count{display:none;}
+            .masonry{columns:2 160px;}
+            .lightbox__nav{display:none;}
+            .footer__inner{grid-template-columns:1fr;}
+            .footer__bottom{flex-direction:column;gap:0.8rem;text-align:center;}
+            .gallery-cta{background-attachment:scroll;}
+        }
+        @media(max-width:480px){
+            .masonry{columns:1;}
+        }
+    </style>
+</head>
+<body>
+
+<div id="cursorDot"><div class="cursor__dot"></div></div>
+<div id="cursorRing"><div class="cursor__ring"></div></div>
+
+<!-- ════════════════════════════
+     NAVBAR
+════════════════════════════ -->
+<nav class="navbar" id="navbar">
+    <a th:href="@{/}" class="navbar__logo">
+        <span class="navbar__logo-mark">✦</span>
+        <span th:text="${hotelName}">The Grand Horizon</span>
+    </a>
+    <ul class="navbar__links">
+        <li><a th:href="@{/}">Home</a></li>
+        <li><a th:href="@{/rooms}">Rooms</a></li>
+        <li><a th:href="@{/amenities}">Amenities</a></li>
+        <li><a th:href="@{/gallery}" class="active">Gallery</a></li>
+        <li><a th:href="@{/about}">About</a></li>
+        <li><a th:href="@{/contact}">Contact</a></li>
+    </ul>
+    <div class="navbar__cta">
+        <a th:href="@{/booking/lookup}" class="navbar__cta-link">My Booking</a>
+        <a th:href="@{/booking}" class="btn btn--primary">Reserve Now</a>
+    </div>
+    <button class="navbar__toggle" id="navToggle"><span></span><span></span><span></span></button>
+</nav>
+
+<!-- ════════════════════════════
+     HERO
+════════════════════════════ -->
+<section class="hero">
+    <div class="hero__bg"></div>
+    <div class="hero__overlay"></div>
+    <div class="hero__grain"></div>
+    <div class="hero__content">
+        <span class="eyebrow">Visual Journey</span>
+        <h1>Life at <em>The Horizon</em></h1>
+        <p>A curated glimpse into the spaces, moments, and beauty that define a stay with us.</p>
+    </div>
+</section>
+
+<!-- ════════════════════════════
+     FILTER TABS
+════════════════════════════ -->
+<div class="filter-tabs" id="filterTabs">
+    <div class="filter-tabs__inner">
+        <div class="filter-tabs__btns">
+            <button class="tab-btn active" data-filter="all">All</button>
+            <button class="tab-btn" data-filter="Rooms">Rooms &amp; Suites</button>
+            <button class="tab-btn" data-filter="Dining">Dining</button>
+            <button class="tab-btn" data-filter="Wellness">Spa &amp; Wellness</button>
+            <button class="tab-btn" data-filter="Pool">Pool &amp; Beach</button>
+            <button class="tab-btn" data-filter="Grounds">Grounds &amp; Views</button>
+            <button class="tab-btn" data-filter="Events">Events</button>
+        </div>
+        <span class="filter-tabs__count"><strong id="visibleCount">28</strong> photos</span>
+    </div>
+</div>
+
+<!-- ════════════════════════════
+     MASONRY GALLERY
+════════════════════════════ -->
+<section class="gallery-section">
+    <div class="masonry" id="masonryGrid">
+
+        <!-- ── ROOMS ── -->
+        <div class="gallery-item reveal" data-category="Rooms" data-src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&q=85" data-caption="Deluxe Garden Room">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Deluxe Garden Room</span>
+                <span class="gallery-item__cat">Rooms &amp; Suites</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Rooms" data-src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&q=85" data-caption="Ocean View Suite">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Ocean View Suite</span>
+                <span class="gallery-item__cat">Rooms &amp; Suites</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Rooms" data-src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200&q=85" data-caption="Grand Pool Villa">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Grand Pool Villa</span>
+                <span class="gallery-item__cat">Rooms &amp; Suites</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Rooms" data-src="https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?w=1200&q=85" data-caption="Horizon Penthouse">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Horizon Penthouse</span>
+                <span class="gallery-item__cat">Rooms &amp; Suites</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Rooms" data-src="https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=1200&q=85" data-caption="Sunset Terrace Suite">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Sunset Terrace Suite</span>
+                <span class="gallery-item__cat">Rooms &amp; Suites</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Rooms" data-src="https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=1200&q=85" data-caption="Classic Double Room">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Classic Double Room</span>
+                <span class="gallery-item__cat">Rooms &amp; Suites</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <!-- ── DINING ── -->
+        <div class="gallery-item reveal" data-category="Dining" data-src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=85" data-caption="Horizon — Fine Dining">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Horizon — Fine Dining</span>
+                <span class="gallery-item__cat">Dining</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Dining" data-src="https://images.unsplash.com/photo-1559329007-40df8a9345d8?w=1200&q=85" data-caption="The Skyline Rooftop Bar">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1559329007-40df8a9345d8?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">The Skyline Rooftop Bar</span>
+                <span class="gallery-item__cat">Dining</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Dining" data-src="https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?w=1200&q=85" data-caption="Garden Table Terrace">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Garden Table Terrace</span>
+                <span class="gallery-item__cat">Dining</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Dining" data-src="https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=1200&q=85" data-caption="Chef's Tasting Menu">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Chef's Tasting Menu</span>
+                <span class="gallery-item__cat">Dining</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Dining" data-src="https://images.unsplash.com/photo-1551218808-94e220e084d2?w=1200&q=85" data-caption="Champagne Breakfast">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Champagne Breakfast</span>
+                <span class="gallery-item__cat">Dining</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <!-- ── WELLNESS ── -->
+        <div class="gallery-item reveal" data-category="Wellness" data-src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&q=85" data-caption="Serenity Spa Treatment Room">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Serenity Spa Treatment Room</span>
+                <span class="gallery-item__cat">Spa &amp; Wellness</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Wellness" data-src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=1200&q=85" data-caption="Couples' Retreat Suite">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Couples' Retreat Suite</span>
+                <span class="gallery-item__cat">Spa &amp; Wellness</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Wellness" data-src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1200&q=85" data-caption="Thermal Mineral Pool">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Thermal Mineral Pool</span>
+                <span class="gallery-item__cat">Spa &amp; Wellness</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Wellness" data-src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1200&q=85" data-caption="Sunrise Terrace Yoga">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Sunrise Terrace Yoga</span>
+                <span class="gallery-item__cat">Spa &amp; Wellness</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <!-- ── POOL & BEACH ── -->
+        <div class="gallery-item reveal" data-category="Pool" data-src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200&q=85" data-caption="Infinity Pool at Dusk">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Infinity Pool at Dusk</span>
+                <span class="gallery-item__cat">Pool &amp; Beach</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Pool" data-src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=85" data-caption="Private Pool Cabana">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Private Pool Cabana</span>
+                <span class="gallery-item__cat">Pool &amp; Beach</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Pool" data-src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&q=85" data-caption="Private Beach at Sunrise">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Private Beach at Sunrise</span>
+                <span class="gallery-item__cat">Pool &amp; Beach</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Pool" data-src="https://images.unsplash.com/photo-1530053969600-caed2596d242?w=1200&q=85" data-caption="Sunset Kayaking">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1530053969600-caed2596d242?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Sunset Kayaking</span>
+                <span class="gallery-item__cat">Pool &amp; Beach</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <!-- ── GROUNDS & VIEWS ── -->
+        <div class="gallery-item reveal" data-category="Grounds" data-src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=85" data-caption="Resort Exterior at Night">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Resort Exterior at Night</span>
+                <span class="gallery-item__cat">Grounds &amp; Views</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Grounds" data-src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1200&q=85" data-caption="The Grand Lobby">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">The Grand Lobby</span>
+                <span class="gallery-item__cat">Grounds &amp; Views</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Grounds" data-src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200&q=85" data-caption="Garden Grounds at Golden Hour">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Garden Grounds at Golden Hour</span>
+                <span class="gallery-item__cat">Grounds &amp; Views</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Grounds" data-src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=1200&q=85" data-caption="Panoramic Horizon View">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Panoramic Horizon View</span>
+                <span class="gallery-item__cat">Grounds &amp; Views</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Grounds" data-src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=85" data-caption="Mountain &amp; Sea Vista">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Mountain &amp; Sea Vista</span>
+                <span class="gallery-item__cat">Grounds &amp; Views</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <!-- ── EVENTS ── -->
+        <div class="gallery-item reveal" data-category="Events" data-src="https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=85" data-caption="Garden Wedding Ceremony">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Garden Wedding Ceremony</span>
+                <span class="gallery-item__cat">Events</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Events" data-src="https://images.unsplash.com/photo-1531058020387-3be344556be6?w=1200&q=85" data-caption="Grand Ballroom Gala">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1531058020387-3be344556be6?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Grand Ballroom Gala</span>
+                <span class="gallery-item__cat">Events</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+        <div class="gallery-item reveal" data-category="Events" data-src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&q=85" data-caption="Corporate Retreat">
+            <div class="gallery-item__img" style="background-image:url('https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80')"></div>
+            <div class="gallery-item__overlay">
+                <span class="gallery-item__caption">Corporate Retreat</span>
+                <span class="gallery-item__cat">Events</span>
+            </div>
+            <span class="gallery-item__zoom">⊕</span>
+        </div>
+
+    </div>
+</section>
+
+<!-- ════════════════════════════
+     LIGHTBOX
+════════════════════════════ -->
+<div class="lightbox" id="lightbox" aria-hidden="true" role="dialog">
+    <button class="lightbox__close" id="lightboxClose" aria-label="Close lightbox">✕</button>
+    <button class="lightbox__nav lightbox__nav--prev" id="lightboxPrev" aria-label="Previous photo">‹</button>
+    <button class="lightbox__nav lightbox__nav--next" id="lightboxNext" aria-label="Next photo">›</button>
+    <div class="lightbox__inner">
+        <img class="lightbox__img" id="lightboxImg" src="" alt="Gallery photo"/>
+        <div class="lightbox__meta">
+            <p class="lightbox__caption" id="lightboxCaption"></p>
+            <p class="lightbox__cat" id="lightboxCat"></p>
+            <p class="lightbox__counter" id="lightboxCounter"></p>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════
+     CTA
+════════════════════════════ -->
+<section class="gallery-cta">
+    <span class="eyebrow">Experience It in Person</span>
+    <h2>Pictures Only Tell Half the Story</h2>
+    <p>The warmth, the scent of the gardens, the sound of the waves — some things you have to feel for yourself.</p>
+    <div class="gallery-cta__actions">
+        <a th:href="@{/booking}" class="btn btn--primary">Reserve Your Stay</a>
+        <a th:href="@{/rooms}" class="btn btn--outline">Browse Rooms</a>
+    </div>
+</section>
+
+<!-- ════════════════════════════
+     FOOTER
+════════════════════════════ -->
+<footer class="footer">
+    <div class="footer__inner">
+        <div class="footer__brand">
+            <div class="footer__brand-logo"><span style="font-size:0.9rem;">✦</span><span th:text="${hotelName}">The Grand Horizon</span></div>
+            <p>A sanctuary of refined luxury, nestled where the earth meets the sky.</p>
+            <div class="footer__social"><a href="#">In</a><a href="#">Fb</a><a href="#">Tw</a><a href="#">Pi</a></div>
+        </div>
+        <div class="footer__col"><h4>Explore</h4><ul><li><a th:href="@{/rooms}">Rooms &amp; Suites</a></li><li><a th:href="@{/amenities}">Amenities</a></li><li><a th:href="@{/gallery}">Gallery</a></li><li><a th:href="@{/about}">Our Story</a></li><li><a th:href="@{/contact}">Contact</a></li></ul></div>
+        <div class="footer__col"><h4>Stay</h4><ul><li><a th:href="@{/booking}">Book a Room</a></li><li><a th:href="@{/booking/lookup}">My Booking</a></li><li><a href="#">Special Offers</a></li><li><a href="#">Events</a></li></ul></div>
+        <div class="footer__col"><h4>Contact</h4><ul><li><a href="#">123 Horizon Boulevard</a></li><li><a href="#">Coastal City, ST 00000</a></li><li><a href="tel:+18000000000">+1 (800) 000-0000</a></li><li><a href="mailto:hello@grandhorizon.com">hello@grandhorizon.com</a></li></ul></div>
+    </div>
+    <div class="footer__bottom">
+        <p>&copy; 2026 <span th:text="${hotelName}">The Grand Horizon</span>. All rights reserved.</p>
+        <p>Privacy Policy · Terms of Service</p>
+    </div>
+</footer>
+
+<!-- ════════════════════════════
+     JAVASCRIPT
+════════════════════════════ -->
+<script>
+    // ── Cursor ──
+    const dot=document.getElementById('cursorDot'),ring=document.getElementById('cursorRing');
+    let mx=0,my=0,rx=0,ry=0;
+    document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px';});
+    (function anim(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(anim);})();
+
+    // ── Navbar ──
+    const navbar=document.getElementById('navbar');
+    window.addEventListener('scroll',()=>navbar.classList.toggle('scrolled',scrollY>60),{passive:true});
+    document.getElementById('navToggle')?.addEventListener('click',()=>navbar.classList.toggle('open'));
+
+    // ── Filter Tabs ──
+    const allItems   = Array.from(document.querySelectorAll('.gallery-item'));
+    const tabBtns    = document.querySelectorAll('.tab-btn');
+    const countEl    = document.getElementById('visibleCount');
+    let   activeFilter = 'all';
+    let   visibleItems = [...allItems];
+
+    tabBtns.forEach(btn=>{
+        btn.addEventListener('click',()=>{
+            tabBtns.forEach(b=>b.classList.remove('active'));
+            btn.classList.add('active');
+            activeFilter = btn.dataset.filter;
+
+            allItems.forEach(item=>{
+                const match = activeFilter === 'all' || item.dataset.category === activeFilter;
+                item.classList.toggle('hidden', !match);
+            });
+
+            visibleItems = allItems.filter(i=>!i.classList.contains('hidden'));
+            countEl.textContent = visibleItems.length;
+        });
+    });
+
+    // Update initial count
+    countEl.textContent = allItems.length;
+
+    // ── Lightbox ──
+    const lightbox   = document.getElementById('lightbox');
+    const lbImg      = document.getElementById('lightboxImg');
+    const lbCaption  = document.getElementById('lightboxCaption');
+    const lbCat      = document.getElementById('lightboxCat');
+    const lbCounter  = document.getElementById('lightboxCounter');
+    const lbClose    = document.getElementById('lightboxClose');
+    const lbPrev     = document.getElementById('lightboxPrev');
+    const lbNext     = document.getElementById('lightboxNext');
+    let   currentIdx = 0;
+
+    function openLightbox(idx){
+        currentIdx = ((idx % visibleItems.length) + visibleItems.length) % visibleItems.length;
+        const item = visibleItems[currentIdx];
+        lbImg.classList.add('fading');
+        setTimeout(()=>{
+            lbImg.src        = item.dataset.src;
+            lbImg.alt        = item.dataset.caption;
+            lbCaption.textContent = item.dataset.caption;
+            lbCat.textContent     = item.dataset.category;
+            lbCounter.textContent = (currentIdx+1) + ' / ' + visibleItems.length;
+            lbImg.onload = ()=>lbImg.classList.remove('fading');
+        }, 180);
+        lightbox.classList.add('open');
+        lightbox.setAttribute('aria-hidden','false');
+        document.body.style.overflow='hidden';
+    }
+
+    function closeLightbox(){
+        lightbox.classList.remove('open');
+        lightbox.setAttribute('aria-hidden','true');
+        document.body.style.overflow='';
+    }
+
+    // Attach click to each item
+    allItems.forEach(item=>{
+        item.addEventListener('click',()=>{
+            visibleItems = allItems.filter(i=>!i.classList.contains('hidden'));
+            const idx    = visibleItems.indexOf(item);
+            if(idx >= 0) openLightbox(idx);
+        });
+    });
+
+    lbClose.addEventListener('click', closeLightbox);
+    lbPrev.addEventListener('click', ()=>openLightbox(currentIdx - 1));
+    lbNext.addEventListener('click', ()=>openLightbox(currentIdx + 1));
+
+    lightbox.addEventListener('click', e=>{ if(e.target === lightbox) closeLightbox(); });
+
+    document.addEventListener('keydown', e=>{
+        if(!lightbox.classList.contains('open')) return;
+        if(e.key==='Escape')      closeLightbox();
+        if(e.key==='ArrowRight')  openLightbox(currentIdx + 1);
+        if(e.key==='ArrowLeft')   openLightbox(currentIdx - 1);
+    });
+
+    // Touch swipe support for lightbox
+    let touchStartX = 0;
+    lightbox.addEventListener('touchstart', e=>{ touchStartX = e.touches[0].clientX; }, {passive:true});
+    lightbox.addEventListener('touchend', e=>{
+        const diff = touchStartX - e.changedTouches[0].clientX;
+        if(Math.abs(diff) > 50) diff > 0 ? openLightbox(currentIdx+1) : openLightbox(currentIdx-1);
+    });
+
+    // ── Scroll Reveal ──
+    const reveals = document.querySelectorAll('.reveal');
+    if('IntersectionObserver' in window){
+        const obs = new IntersectionObserver(entries=>{
+            entries.forEach((e,i)=>{
+                if(e.isIntersecting){
+                    e.target.style.transitionDelay = (i % 6) * 0.06 + 's';
+                    e.target.classList.add('visible');
+                    obs.unobserve(e.target);
+                }
+            });
+        },{threshold:0.08});
+        reveals.forEach(el=>obs.observe(el));
+    } else { reveals.forEach(el=>el.classList.add('visible')); }
+</script>
+</body>
+</html>

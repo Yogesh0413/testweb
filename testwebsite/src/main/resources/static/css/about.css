@@ -1,0 +1,282 @@
+/* =====================
+   ABOUT.CSS
+   ===================== */
+
+/* Hero */
+.about-hero {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    padding: 8rem 4rem 5rem;
+    background:
+        linear-gradient(120deg, rgba(14,13,11,0.7) 40%, rgba(14,13,11,0.3) 100%),
+        url('https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1600&q=80') center/cover no-repeat;
+}
+
+.about-hero__content h1 {
+    margin-top: 0.5rem;
+    max-width: 600px;
+    line-height: 1.15;
+}
+
+.about-hero__content h1 em {
+    font-style: italic;
+    color: var(--color-gold);
+}
+
+/* Intro */
+.about-intro {
+    padding: 7rem 4rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.about-intro__inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+    align-items: center;
+}
+
+.about-intro__text h2 {
+    margin: 0.5rem 0 1.5rem;
+    line-height: 1.25;
+}
+
+.about-intro__text p {
+    font-size: 0.95rem;
+    line-height: 1.9;
+    margin-bottom: 1rem;
+}
+
+.about-intro__image {
+    height: 480px;
+    border-radius: var(--radius-lg);
+    background:
+        url('https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80') center/cover no-repeat;
+    box-shadow: var(--shadow-card);
+}
+
+/* Values */
+.about-values {
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    padding: 6rem 4rem;
+}
+
+.about-values__inner {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.about-values__header {
+    text-align: center;
+    margin-bottom: 3.5rem;
+}
+
+.about-values__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+}
+
+.value-card {
+    padding: 2rem;
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition: transform var(--transition), border-color var(--transition);
+}
+
+.value-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--color-gold);
+}
+
+.value-card__icon {
+    display: block;
+    font-size: 1.4rem;
+    color: var(--color-gold);
+    margin-bottom: 1rem;
+}
+
+.value-card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.6rem;
+}
+
+.value-card p {
+    font-size: 0.85rem;
+    line-height: 1.8;
+}
+
+/* Team */
+.about-team {
+    padding: 7rem 4rem;
+}
+
+.about-team__inner {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.about-team__header {
+    text-align: center;
+    margin-bottom: 3.5rem;
+}
+
+.about-team__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+}
+
+.team-card {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: transform var(--transition);
+}
+
+.team-card:hover {
+    transform: translateY(-4px);
+}
+
+.team-card__img {
+    height: 260px;
+    background-size: cover;
+    background-position: center top;
+}
+
+.team-card__img--1 { background-image: url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&q=80'); }
+.team-card__img--2 { background-image: url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80'); }
+.team-card__img--3 { background-image: url('https://images.unsplash.com/photo-1580489944761-15a19d654956?w=600&q=80'); }
+
+.team-card__body {
+    padding: 1.5rem;
+}
+
+.team-card__body h3 {
+    font-size: 1.3rem;
+    margin-bottom: 0.2rem;
+}
+
+.team-card__body span {
+    display: block;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-gold);
+    margin-bottom: 0.8rem;
+}
+
+.team-card__body p {
+    font-size: 0.85rem;
+    line-height: 1.8;
+}
+
+/* Timeline */
+.about-timeline {
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    padding: 6rem 4rem;
+}
+
+.about-timeline__inner {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.about-timeline__inner h2 {
+    margin: 0.5rem 0 3rem;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--color-gold), transparent);
+}
+
+.timeline__item {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+    position: relative;
+}
+
+.timeline__item::before {
+    content: '';
+    position: absolute;
+    left: -2.3rem;
+    top: 0.4rem;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--color-gold);
+    box-shadow: 0 0 0 3px var(--color-gold-dim);
+}
+
+.timeline__year {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    color: var(--color-gold);
+    font-weight: 300;
+    min-width: 60px;
+    line-height: 1;
+    padding-top: 0.1rem;
+}
+
+.timeline__content h4 {
+    font-size: 1.1rem;
+    margin-bottom: 0.3rem;
+}
+
+.timeline__content p {
+    font-size: 0.88rem;
+    line-height: 1.8;
+}
+
+/* CTA */
+.about-cta {
+    padding: 7rem 4rem;
+    text-align: center;
+    background:
+        linear-gradient(rgba(14,13,11,0.8), rgba(14,13,11,0.8)),
+        url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1600&q=80') center/cover no-repeat;
+    background-attachment: fixed;
+}
+
+.about-cta__inner h2 { margin-bottom: 0.8rem; }
+.about-cta__inner p  { margin-bottom: 2rem; font-size: 1rem; }
+
+/* Responsive */
+@media (max-width: 1000px) {
+    .about-values__grid { grid-template-columns: 1fr 1fr; }
+    .about-team__grid   { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 700px) {
+    .about-hero,
+    .about-intro,
+    .about-values,
+    .about-team,
+    .about-timeline,
+    .about-cta { padding-left: 1.5rem; padding-right: 1.5rem; }
+
+    .about-intro__inner { grid-template-columns: 1fr; gap: 2.5rem; }
+    .about-intro__image  { height: 280px; }
+    .about-values__grid  { grid-template-columns: 1fr; }
+    .about-team__grid    { grid-template-columns: 1fr; }
+    .about-cta { background-attachment: scroll; }
+}

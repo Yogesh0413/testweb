@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${hotelName} + ' | ' + ${pageTitle ?: 'Welcome'}">The Grand Horizon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+    <link rel="stylesheet" th:href="@{/css/navbar.css}"/>
+    <link rel="stylesheet" th:href="@{/css/footer.css}"/>
+    <!-- Page-specific CSS slot -->
+    <th:block th:replace="${pageCss} ?: ~{}"></th:block>
+</head>
+<body th:fragment="layout(content,pageCss,activePage)">
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <div class="navbar__logo">
+            <a th:href="@{/}">
+                <span class="navbar__logo-icon">✦</span>
+                <span th:text="${hotelName}">The Grand Horizon</span>
+            </a>
+        </div>
+        <ul class="navbar__links">
+            <li><a th:href="@{/}" th:classappend="${activePage == 'home'} ? 'active'">Home</a></li>
+            <li><a th:href="@{/rooms}" th:classappend="${activePage == 'rooms'} ? 'active'">Rooms</a></li>
+            <li><a th:href="@{/amenities}" th:classappend="${activePage == 'amenities'} ? 'active'">Amenities</a></li>
+            <li><a th:href="@{/about}" th:classappend="${activePage == 'about'} ? 'active'">About</a></li>
+            <li><a th:href="@{/contact}" th:classappend="${activePage == 'contact'} ? 'active'">Contact</a></li>
+        </ul>
+        <div class="navbar__actions">
+            <a th:href="@{/booking}" class="btn btn--outline">Book Now</a>
+        </div>
+        <button class="navbar__toggle" id="navToggle" aria-label="Toggle navigation">
+            <span></span><span></span><span></span>
+        </button>
+    </nav>
+
+    <!-- PAGE CONTENT -->
+    <main th:replace="${content}">
+        <!-- Child templates inject here -->
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer__inner">
+            <div class="footer__brand">
+                <span class="footer__logo">✦ <span th:text="${hotelName}">The Grand Horizon</span></span>
+                <p>A sanctuary of refined luxury,<br/>nestled where the earth meets the sky.</p>
+            </div>
+            <div class="footer__links">
+                <h4>Explore</h4>
+                <ul>
+                    <li><a th:href="@{/rooms}">Rooms &amp; Suites</a></li>
+                    <li><a th:href="@{/amenities}">Amenities</a></li>
+                    <li><a th:href="@{/about}">Our Story</a></li>
+                    <li><a th:href="@{/contact}">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer__links">
+                <h4>Stay</h4>
+                <ul>
+                    <li><a th:href="@{/booking}">Book a Room</a></li>
+                    <li><a href="#">Special Offers</a></li>
+                    <li><a href="#">Events</a></li>
+                    <li><a href="#">Gift Cards</a></li>
+                </ul>
+            </div>
+            <div class="footer__contact">
+                <h4>Find Us</h4>
+                <p>123 Horizon Boulevard<br/>Coastal City, ST 00000</p>
+                <p>+1 (800) 000-0000<br/>hello@grandhorizon.com</p>
+            </div>
+        </div>
+        <div class="footer__bottom">
+            <p>&copy; 2026 <span th:text="${hotelName}">The Grand Horizon</span>. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

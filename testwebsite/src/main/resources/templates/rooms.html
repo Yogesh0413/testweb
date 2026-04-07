@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${hotelName} + ' — Rooms &amp; Suites'">The Grand Horizon — Rooms &amp; Suites</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+    <style>
+        /* ── Variables & Reset ── */
+        :root {
+            --gold:#c9a96e; --gold-light:#e8d5b0; --gold-dim:rgba(201,169,110,0.12);
+            --gold-border:rgba(201,169,110,0.25); --bg:#08090a; --surface:#0f1012;
+            --card:#141618; --border:rgba(255,255,255,0.07); --text:#f2ede6;
+            --muted:#7a756c; --dim:#3d3a35;
+            --display:'Playfair Display',Georgia,serif; --body:'DM Sans',sans-serif;
+            --ease:cubic-bezier(0.25,0.46,0.45,0.94);
+        }
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        html{scroll-behavior:smooth;}
+        body{background:var(--bg);color:var(--text);font-family:var(--body);font-weight:300;line-height:1.7;-webkit-font-smoothing:antialiased;cursor:none;}
+        a{color:inherit;text-decoration:none;transition:color 0.3s var(--ease);}
+        ul{list-style:none;}
+        h1,h2,h3,h4{font-family:var(--display);font-weight:400;line-height:1.15;}
+        h1{font-size:clamp(3rem,7vw,6.5rem);}
+        h2{font-size:clamp(1.8rem,3.5vw,3.2rem);}
+        h3{font-size:clamp(1.1rem,2vw,1.6rem);}
+        p{color:var(--muted);font-size:0.93rem;line-height:1.85;}
+
+        /* ── Cursor ── */
+        #cursorDot,#cursorRing{position:fixed;top:0;left:0;pointer-events:none;z-index:9999;}
+        .cursor__dot{width:8px;height:8px;background:var(--gold);border-radius:50%;transform:translate(-50%,-50%);}
+        .cursor__ring{width:36px;height:36px;border:1px solid rgba(201,169,110,0.5);border-radius:50%;transform:translate(-50%,-50%);transition:width 0.3s,height 0.3s;}
+
+        /* ── Buttons ── */
+        .btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.85rem 2.2rem;font-family:var(--body);font-size:0.75rem;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;border-radius:2px;transition:all 0.3s var(--ease);cursor:pointer;border:none;white-space:nowrap;}
+        .btn--primary{background:var(--gold);color:#08090a;}
+        .btn--primary:hover{background:var(--gold-light);transform:translateY(-2px);box-shadow:0 12px 32px rgba(201,169,110,0.25);}
+        .btn--outline{background:transparent;color:var(--gold);border:1px solid var(--gold-border);}
+        .btn--outline:hover{border-color:var(--gold);background:var(--gold-dim);transform:translateY(-2px);}
+        .btn--ghost{background:rgba(255,255,255,0.05);color:var(--text);border:1px solid var(--border);}
+        .btn--ghost:hover{background:rgba(255,255,255,0.1);transform:translateY(-2px);}
+        .btn--sm{padding:0.6rem 1.3rem;font-size:0.7rem;}
+
+        .eyebrow{display:block;font-family:var(--body);font-size:0.68rem;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);margin-bottom:0.8rem;}
+
+        /* ── Navbar ── */
+        .navbar{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;justify-content:space-between;padding:2rem 5rem;transition:all 0.4s var(--ease);}
+        .navbar.scrolled{padding:1.1rem 5rem;background:rgba(8,9,10,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+        .navbar__logo{font-family:var(--display);font-size:1.35rem;display:flex;align-items:center;gap:0.6rem;}
+        .navbar__logo-mark{color:var(--gold);font-size:0.8rem;}
+        .navbar__logo:hover{color:var(--gold-light);}
+        .navbar__links{display:flex;align-items:center;gap:3rem;}
+        .navbar__links a{font-size:0.72rem;font-weight:400;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);position:relative;padding-bottom:3px;}
+        .navbar__links a::after{content:'';position:absolute;bottom:0;left:0;width:0;height:1px;background:var(--gold);transition:width 0.3s var(--ease);}
+        .navbar__links a:hover,.navbar__links a.active{color:var(--text);}
+        .navbar__links a:hover::after,.navbar__links a.active::after{width:100%;}
+        .navbar__cta{display:flex;align-items:center;gap:1.5rem;}
+        .navbar__cta-link{font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);transition:color 0.3s;}
+        .navbar__cta-link:hover{color:var(--gold);}
+        .navbar__toggle{display:none;flex-direction:column;gap:6px;background:none;border:none;cursor:pointer;padding:4px;}
+        .navbar__toggle span{display:block;width:26px;height:1px;background:var(--text);transition:all 0.3s;}
+
+        /* ── Hero ── */
+        .hero{position:relative;min-height:65vh;display:flex;align-items:flex-end;padding:6rem 5rem;overflow:hidden;}
+        .hero__bg{position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=2000&q=85') center/cover;transform:scale(1.05);animation:heroZoom 14s var(--ease) forwards;}
+        @keyframes heroZoom{to{transform:scale(1);}}
+        .hero__overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(8,9,10,0.88) 0%,rgba(8,9,10,0.35) 60%,rgba(8,9,10,0.75) 100%);}
+        .hero__grain{position:absolute;inset:0;opacity:0.04;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+        .hero__content{position:relative;animation:fadeUp 1s var(--ease) 0.2s both;}
+        .hero__content h1{margin:0.5rem 0 1rem;}
+        .hero__content h1 em{font-style:italic;color:var(--gold);}
+        .hero__content p{font-size:1rem;max-width:480px;}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:translateY(0);}}
+
+        /* ── Filter Bar ── */
+        .filter-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 5rem;position:sticky;top:0;z-index:100;}
+        .filter-bar__inner{max-width:1300px;margin:0 auto;display:flex;align-items:stretch;gap:0;}
+        .filter-field{display:flex;flex-direction:column;justify-content:center;gap:0.25rem;padding:1.2rem 2rem;border-right:1px solid var(--border);flex:1;transition:background 0.2s;}
+        .filter-field:hover{background:rgba(255,255,255,0.02);}
+        .filter-field label{font-size:0.58rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);font-weight:500;}
+        .filter-field select{background:transparent;border:none;color:var(--text);font-family:var(--body);font-size:0.85rem;font-weight:300;outline:none;cursor:pointer;width:100%;}
+        .filter-field select option{background:var(--surface);}
+        .filter-actions{display:flex;align-items:center;gap:0.8rem;padding:0 2rem;}
+
+        /* Active filter pills */
+        .filter-pills{max-width:1300px;margin:0 auto;padding:1rem 5rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+        .filter-pills:empty{display:none;}
+        .filter-pill{display:inline-flex;align-items:center;gap:0.4rem;background:var(--gold-dim);border:1px solid var(--gold-border);color:var(--gold);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.3rem 0.8rem;border-radius:20px;}
+        .filter-pill a{color:var(--gold);font-size:0.8rem;line-height:1;transition:color 0.2s;}
+        .filter-pill a:hover{color:var(--gold-light);}
+
+        /* ── Results Header ── */
+        .results-header{max-width:1300px;margin:3rem auto 2rem;padding:0 5rem;display:flex;align-items:center;justify-content:space-between;}
+        .results-header p{font-size:0.82rem;color:var(--muted);}
+        .results-header strong{color:var(--text);}
+
+        /* ── Room Grid ── */
+        .rooms-section{padding:0 5rem 8rem;max-width:1300px;margin:0 auto;}
+        .rooms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(370px,1fr));gap:1.5rem;}
+
+        /* ── Room Card ── */
+        .room-card{background:var(--card);border:1px solid var(--border);border-radius:2px;overflow:hidden;display:flex;flex-direction:column;transition:transform 0.4s var(--ease),box-shadow 0.4s,border-color 0.3s;}
+        .room-card:hover{transform:translateY(-6px);box-shadow:0 24px 60px rgba(0,0,0,0.45);border-color:rgba(201,169,110,0.15);}
+
+        .room-card__img-wrap{overflow:hidden;position:relative;}
+        .room-card__img{height:240px;background-size:cover;background-position:center;transition:transform 0.6s var(--ease);}
+        .room-card:hover .room-card__img{transform:scale(1.05);}
+
+        .room-card__badge{position:absolute;top:1rem;left:1rem;background:rgba(8,9,10,0.75);backdrop-filter:blur(10px);border:1px solid var(--border);color:var(--gold);font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;padding:0.3rem 0.9rem;font-weight:500;}
+        .room-card__avail{position:absolute;top:1rem;right:1rem;width:8px;height:8px;border-radius:50%;background:#5cad78;box-shadow:0 0 0 3px rgba(92,173,120,0.2);}
+        .room-card__avail--no{background:#c06060;box-shadow:0 0 0 3px rgba(192,96,96,0.2);}
+
+        .room-card__body{padding:1.8rem;display:flex;flex-direction:column;flex:1;gap:0.4rem;}
+        .room-card__meta{display:flex;gap:0.4rem;font-size:0.7rem;color:var(--dim);flex-wrap:wrap;margin-bottom:0.2rem;}
+        .room-card__meta span.sep{color:var(--dim);}
+        .room-card__body h3{font-size:1.4rem;transition:color 0.3s;}
+        .room-card__body h3 a:hover{color:var(--gold);}
+        .room-card__body>p{font-size:0.84rem;line-height:1.75;flex:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+
+        .room-card__footer{display:flex;align-items:center;justify-content:space-between;margin-top:1.2rem;padding-top:1.2rem;border-top:1px solid var(--border);gap:1rem;flex-wrap:wrap;}
+        .room-price{display:flex;align-items:baseline;gap:0.3rem;}
+        .room-price__amount{font-family:var(--display);font-size:2rem;font-weight:400;color:var(--gold);line-height:1;}
+        .room-price__label{font-size:0.72rem;color:var(--muted);}
+        .room-card__actions{display:flex;gap:0.6rem;}
+
+        /* ── Empty State ── */
+        .rooms-empty{text-align:center;padding:7rem 2rem;}
+        .rooms-empty__icon{font-size:3rem;color:var(--dim);margin-bottom:1.5rem;}
+        .rooms-empty h3{font-size:1.8rem;margin-bottom:0.6rem;}
+        .rooms-empty p{max-width:360px;margin:0 auto 2rem;}
+
+        /* ── Footer ── */
+        .footer{background:var(--surface);border-top:1px solid var(--border);padding:6rem 5rem 2.5rem;}
+        .footer__inner{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:4rem;margin-bottom:4rem;}
+        .footer__brand-logo{font-family:var(--display);font-size:1.5rem;color:var(--gold);display:flex;align-items:center;gap:0.5rem;margin-bottom:1.2rem;}
+        .footer__brand p{font-size:0.85rem;color:var(--muted);max-width:240px;line-height:1.85;margin-bottom:1.5rem;}
+        .footer__social{display:flex;gap:0.8rem;}
+        .footer__social a{width:36px;height:36px;border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--muted);transition:all 0.3s;}
+        .footer__social a:hover{border-color:var(--gold);color:var(--gold);}
+        .footer__col h4{font-family:var(--body);font-size:0.65rem;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);margin-bottom:1.4rem;}
+        .footer__col ul{display:flex;flex-direction:column;gap:0.7rem;}
+        .footer__col a{font-size:0.85rem;color:var(--muted);transition:color 0.3s;}
+        .footer__col a:hover{color:var(--gold-light);}
+        .footer__bottom{max-width:1300px;margin:0 auto;border-top:1px solid var(--border);padding-top:2rem;display:flex;align-items:center;justify-content:space-between;}
+        .footer__bottom p{font-size:0.75rem;color:var(--dim);}
+
+        /* ── Animations ── */
+        .reveal{opacity:0;transform:translateY(30px);transition:opacity 0.7s var(--ease),transform 0.7s var(--ease);}
+        .reveal.visible{opacity:1;transform:translateY(0);}
+        ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px;}::-webkit-scrollbar-thumb:hover{background:var(--gold);}
+
+        /* ── Responsive ── */
+        @media(max-width:1000px){
+            .navbar,.navbar.scrolled{padding-left:1.5rem;padding-right:1.5rem;}
+            .navbar__links,.navbar__cta{display:none;}
+            .navbar__toggle{display:flex;}
+            .hero,.filter-pills,.results-header,.rooms-section,.footer{padding-left:1.5rem;padding-right:1.5rem;}
+            .filter-bar{padding:0 1.5rem;}
+            .filter-bar__inner{flex-wrap:wrap;}
+            .filter-field{min-width:140px;border-bottom:1px solid var(--border);}
+            .filter-actions{padding:1rem 0;width:100%;}
+            .rooms-grid{grid-template-columns:1fr;}
+            .footer__inner{grid-template-columns:1fr 1fr;}
+        }
+        @media(max-width:600px){
+            .footer__inner{grid-template-columns:1fr;}
+            .footer__bottom{flex-direction:column;gap:0.8rem;text-align:center;}
+        }
+    </style>
+</head>
+<body>
+
+<div id="cursorDot"><div class="cursor__dot"></div></div>
+<div id="cursorRing"><div class="cursor__ring"></div></div>
+
+<!-- ════════════════════════════
+     NAVBAR
+════════════════════════════ -->
+<nav class="navbar" id="navbar">
+    <a th:href="@{/}" class="navbar__logo">
+        <span class="navbar__logo-mark">✦</span>
+        <span th:text="${hotelName}">The Grand Horizon</span>
+    </a>
+    <ul class="navbar__links">
+        <li><a th:href="@{/}">Home</a></li>
+        <li><a th:href="@{/rooms}" class="active">Rooms</a></li>
+        <li><a th:href="@{/amenities}">Amenities</a></li>
+        <li><a th:href="@{/gallery}">Gallery</a></li>
+        <li><a th:href="@{/about}">About</a></li>
+        <li><a th:href="@{/contact}">Contact</a></li>
+    </ul>
+    <div class="navbar__cta">
+        <a th:href="@{/booking/lookup}" class="navbar__cta-link">My Booking</a>
+        <a th:href="@{/booking}" class="btn btn--primary">Reserve Now</a>
+    </div>
+    <button class="navbar__toggle" id="navToggle"><span></span><span></span><span></span></button>
+</nav>
+
+<!-- ════════════════════════════
+     HERO
+════════════════════════════ -->
+<section class="hero">
+    <div class="hero__bg"></div>
+    <div class="hero__overlay"></div>
+    <div class="hero__grain"></div>
+    <div class="hero__content">
+        <span class="eyebrow">Accommodations</span>
+        <h1>Rooms &amp; <em>Suites</em></h1>
+        <p>Each space is a sanctuary — crafted with intention, dressed in luxury, designed for the art of rest.</p>
+    </div>
+</section>
+
+<!-- ════════════════════════════
+     FILTER BAR
+════════════════════════════ -->
+<div class="filter-bar" id="filterBar">
+    <form class="filter-bar__inner" th:action="@{/rooms}" method="get" id="filterForm">
+        <div class="filter-field">
+            <label for="type">Room Type</label>
+            <select name="type" id="type" onchange="this.form.submit()">
+                <option value="">All Types</option>
+                <option value="Classic"   th:selected="${selectedType == 'Classic'}">Classic</option>
+                <option value="Deluxe"    th:selected="${selectedType == 'Deluxe'}">Deluxe</option>
+                <option value="Suite"     th:selected="${selectedType == 'Suite'}">Suite</option>
+                <option value="Villa"     th:selected="${selectedType == 'Villa'}">Villa</option>
+                <option value="Penthouse" th:selected="${selectedType == 'Penthouse'}">Penthouse</option>
+            </select>
+        </div>
+        <div class="filter-field">
+            <label for="guests">Guests</label>
+            <select name="guests" id="guests" onchange="this.form.submit()">
+                <option value="">Any</option>
+                <option value="1" th:selected="${selectedGuests == 1}">1+ Guests</option>
+                <option value="2" th:selected="${selectedGuests == 2}">2+ Guests</option>
+                <option value="4" th:selected="${selectedGuests == 4}">4+ Guests</option>
+            </select>
+        </div>
+        <div class="filter-field">
+            <label for="maxPrice">Max Price / Night</label>
+            <select name="maxPrice" id="maxPrice" onchange="this.form.submit()">
+                <option value="">Any Budget</option>
+                <option value="200"  th:selected="${selectedMaxPrice == 200}">Up to $200</option>
+                <option value="500"  th:selected="${selectedMaxPrice == 500}">Up to $500</option>
+                <option value="1000" th:selected="${selectedMaxPrice == 1000}">Up to $1,000</option>
+            </select>
+        </div>
+        <div class="filter-actions">
+            <a th:href="@{/rooms}" class="btn btn--ghost btn--sm">Clear All</a>
+        </div>
+    </form>
+</div>
+
+<!-- Active Filter Pills -->
+<div class="filter-pills" style="padding-top:1.2rem;">
+    <span class="filter-pill" th:if="${selectedType != null and !selectedType.isBlank()}">
+        <span th:text="${selectedType}">Type</span>
+        <a th:href="@{/rooms(guests=${selectedGuests},maxPrice=${selectedMaxPrice})}">✕</a>
+    </span>
+    <span class="filter-pill" th:if="${selectedGuests != null}">
+        <span th:text="${selectedGuests} + '+ Guests'">Guests</span>
+        <a th:href="@{/rooms(type=${selectedType},maxPrice=${selectedMaxPrice})}">✕</a>
+    </span>
+    <span class="filter-pill" th:if="${selectedMaxPrice != null}">
+        <span th:text="'Under $' + ${selectedMaxPrice}">Price</span>
+        <a th:href="@{/rooms(type=${selectedType},guests=${selectedGuests})}">✕</a>
+    </span>
+</div>
+
+<!-- Results count -->
+<div class="results-header">
+    <p th:if="${!rooms.isEmpty()}">
+        Showing <strong th:text="${rooms.size()}">0</strong>
+        <span th:text="${rooms.size() == 1} ? 'room' : 'rooms'">rooms</span>
+        <span th:if="${selectedType != null and !selectedType.isBlank()}"> · <strong th:text="${selectedType}">Type</strong></span>
+    </p>
+    <p th:if="${rooms.isEmpty()}">No rooms match your filters.</p>
+    <a th:href="@{/booking}" class="btn btn--outline btn--sm">Book a Room →</a>
+</div>
+
+<!-- ════════════════════════════
+     ROOM GRID
+════════════════════════════ -->
+<section class="rooms-section">
+
+    <!-- Grid -->
+    <div class="rooms-grid" th:if="${!rooms.isEmpty()}">
+        <div class="room-card reveal" th:each="room : ${rooms}">
+
+            <div class="room-card__img-wrap">
+                <a th:href="@{/rooms/{id}(id=${room.id})}">
+                    <div class="room-card__img"
+                         th:style="'background-image:url(' + ${room.imageUrl} + ')'"></div>
+                </a>
+                <span class="room-card__badge" th:text="${room.type}">Suite</span>
+                <span th:classappend="${room.available} ? '' : ' room-card__avail--no'"
+                      class="room-card__avail"
+                      th:title="${room.available} ? 'Available' : 'Unavailable'"></span>
+            </div>
+
+            <div class="room-card__body">
+                <div class="room-card__meta">
+                    <span th:text="${room.sizeSqm} + ' m²'">65 m²</span>
+                    <span class="sep">·</span>
+                    <span th:text="${room.bedCount} + ' ' + ${room.bedType} + ' Bed'">1 King Bed</span>
+                    <span class="sep">·</span>
+                    <span th:text="${room.view} + ' View'">Ocean View</span>
+                    <span class="sep">·</span>
+                    <span th:text="'Up to ' + ${room.maxGuests} + ' guests'">Up to 2 guests</span>
+                </div>
+
+                <h3><a th:href="@{/rooms/{id}(id=${room.id})}" th:text="${room.name}">Room Name</a></h3>
+                <p th:text="${room.description}">Description goes here.</p>
+
+                <div class="room-card__footer">
+                    <div class="room-price">
+                        <span class="room-price__amount"
+                              th:text="'$' + ${#numbers.formatDecimal(room.pricePerNight, 0, 0)}">$420</span>
+                        <span class="room-price__label">/ night</span>
+                    </div>
+                    <div class="room-card__actions">
+                        <a th:href="@{/rooms/{id}(id=${room.id})}" class="btn btn--ghost btn--sm">Details</a>
+                        <a th:href="@{/booking(roomId=${room.id})}"
+                           class="btn btn--primary btn--sm"
+                           th:classappend="${!room.available} ? ' disabled'"
+                           th:text="${room.available} ? 'Book' : 'Unavailable'">Book</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty state -->
+    <div class="rooms-empty" th:if="${rooms.isEmpty()}">
+        <div class="rooms-empty__icon">◎</div>
+        <h3>No Rooms Found</h3>
+        <p>No rooms match your current filters. Try adjusting your search criteria.</p>
+        <a th:href="@{/rooms}" class="btn btn--outline">Clear Filters &amp; Browse All</a>
+    </div>
+
+</section>
+
+<!-- ════════════════════════════
+     FOOTER
+════════════════════════════ -->
+<footer class="footer">
+    <div class="footer__inner">
+        <div class="footer__brand">
+            <div class="footer__brand-logo"><span style="font-size:0.9rem;">✦</span><span th:text="${hotelName}">The Grand Horizon</span></div>
+            <p>A sanctuary of refined luxury, nestled where the earth meets the sky.</p>
+            <div class="footer__social"><a href="#">In</a><a href="#">Fb</a><a href="#">Tw</a><a href="#">Pi</a></div>
+        </div>
+        <div class="footer__col"><h4>Explore</h4><ul><li><a th:href="@{/rooms}">Rooms &amp; Suites</a></li><li><a th:href="@{/amenities}">Amenities</a></li><li><a th:href="@{/gallery}">Gallery</a></li><li><a th:href="@{/about}">Our Story</a></li><li><a th:href="@{/contact}">Contact</a></li></ul></div>
+        <div class="footer__col"><h4>Stay</h4><ul><li><a th:href="@{/booking}">Book a Room</a></li><li><a th:href="@{/booking/lookup}">My Booking</a></li><li><a href="#">Special Offers</a></li><li><a href="#">Events</a></li></ul></div>
+        <div class="footer__col"><h4>Contact</h4><ul><li><a href="#">123 Horizon Boulevard</a></li><li><a href="#">Coastal City, ST 00000</a></li><li><a href="tel:+18000000000">+1 (800) 000-0000</a></li><li><a href="mailto:hello@grandhorizon.com">hello@grandhorizon.com</a></li></ul></div>
+    </div>
+    <div class="footer__bottom">
+        <p>&copy; 2026 <span th:text="${hotelName}">The Grand Horizon</span>. All rights reserved.</p>
+        <p>Privacy Policy · Terms of Service</p>
+    </div>
+</footer>
+
+<script>
+    // Cursor
+    const dot=document.getElementById('cursorDot'),ring=document.getElementById('cursorRing');
+    let mx=0,my=0,rx=0,ry=0;
+    document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px';});
+    (function anim(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(anim);})();
+
+    // Navbar scroll
+    const navbar=document.getElementById('navbar');
+    window.addEventListener('scroll',()=>navbar.classList.toggle('scrolled',scrollY>60),{passive:true});
+    document.getElementById('navToggle')?.addEventListener('click',()=>navbar.classList.toggle('open'));
+
+    // Scroll reveal
+    const reveals=document.querySelectorAll('.reveal');
+    if('IntersectionObserver' in window){
+        const obs=new IntersectionObserver(entries=>{
+            entries.forEach((e,i)=>{
+                if(e.isIntersecting){
+                    e.target.style.transitionDelay=(i%4)*0.07+'s';
+                    e.target.classList.add('visible');
+                    obs.unobserve(e.target);
+                }
+            });
+        },{threshold:0.1});
+        reveals.forEach(el=>obs.observe(el));
+    } else { reveals.forEach(el=>el.classList.add('visible')); }
+</script>
+</body>
+</html>

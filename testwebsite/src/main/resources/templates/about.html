@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${hotelName} + ' — Our Story'">The Grand Horizon — Our Story</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+    <style>
+        :root{
+            --gold:#c9a96e;--gold-light:#e8d5b0;--gold-dim:rgba(201,169,110,0.12);
+            --gold-border:rgba(201,169,110,0.25);--bg:#08090a;--surface:#0f1012;
+            --card:#141618;--border:rgba(255,255,255,0.07);--text:#f2ede6;
+            --muted:#7a756c;--dim:#3d3a35;
+            --display:'Playfair Display',Georgia,serif;--body:'DM Sans',sans-serif;
+            --ease:cubic-bezier(0.25,0.46,0.45,0.94);
+        }
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        html{scroll-behavior:smooth;}
+        body{background:var(--bg);color:var(--text);font-family:var(--body);font-weight:300;line-height:1.7;-webkit-font-smoothing:antialiased;cursor:none;}
+        a{color:inherit;text-decoration:none;transition:color 0.3s;}
+        ul{list-style:none;}
+        h1,h2,h3,h4{font-family:var(--display);font-weight:400;line-height:1.15;}
+        h1{font-size:clamp(3rem,7vw,6.5rem);}
+        h2{font-size:clamp(1.8rem,3.5vw,3.2rem);}
+        h3{font-size:clamp(1.1rem,2vw,1.6rem);}
+        p{color:var(--muted);font-size:0.93rem;line-height:1.85;}
+
+        /* Cursor */
+        #cursorDot,#cursorRing{position:fixed;top:0;left:0;pointer-events:none;z-index:9999;}
+        .cursor__dot{width:8px;height:8px;background:var(--gold);border-radius:50%;transform:translate(-50%,-50%);}
+        .cursor__ring{width:36px;height:36px;border:1px solid rgba(201,169,110,0.5);border-radius:50%;transform:translate(-50%,-50%);transition:width 0.3s,height 0.3s;}
+
+        /* Buttons */
+        .btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.85rem 2.2rem;font-family:var(--body);font-size:0.75rem;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;border-radius:2px;transition:all 0.3s var(--ease);cursor:pointer;border:none;white-space:nowrap;}
+        .btn--primary{background:var(--gold);color:#08090a;}
+        .btn--primary:hover{background:var(--gold-light);transform:translateY(-2px);box-shadow:0 12px 32px rgba(201,169,110,0.25);}
+        .btn--outline{background:transparent;color:var(--gold);border:1px solid var(--gold-border);}
+        .btn--outline:hover{border-color:var(--gold);background:var(--gold-dim);transform:translateY(-2px);}
+        .btn--ghost{background:rgba(255,255,255,0.05);color:var(--text);border:1px solid var(--border);}
+        .btn--ghost:hover{background:rgba(255,255,255,0.1);transform:translateY(-2px);}
+
+        .eyebrow{display:block;font-family:var(--body);font-size:0.68rem;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);margin-bottom:0.8rem;}
+        .link-arrow{display:inline-flex;align-items:center;gap:0.5rem;font-size:0.78rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-top:1.2rem;transition:gap 0.3s var(--ease),color 0.3s;}
+        .link-arrow:hover{gap:0.9rem;color:var(--gold-light);}
+
+        /* Navbar */
+        .navbar{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;justify-content:space-between;padding:2rem 5rem;transition:all 0.4s var(--ease);}
+        .navbar.scrolled{padding:1.1rem 5rem;background:rgba(8,9,10,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+        .navbar__logo{font-family:var(--display);font-size:1.35rem;display:flex;align-items:center;gap:0.6rem;}
+        .navbar__logo-mark{color:var(--gold);font-size:0.8rem;}
+        .navbar__logo:hover{color:var(--gold-light);}
+        .navbar__links{display:flex;align-items:center;gap:3rem;}
+        .navbar__links a{font-size:0.72rem;font-weight:400;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);position:relative;padding-bottom:3px;}
+        .navbar__links a::after{content:'';position:absolute;bottom:0;left:0;width:0;height:1px;background:var(--gold);transition:width 0.3s var(--ease);}
+        .navbar__links a:hover,.navbar__links a.active{color:var(--text);}
+        .navbar__links a:hover::after,.navbar__links a.active::after{width:100%;}
+        .navbar__cta{display:flex;align-items:center;gap:1.5rem;}
+        .navbar__cta-link{font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);transition:color 0.3s;}
+        .navbar__cta-link:hover{color:var(--gold);}
+        .navbar__toggle{display:none;flex-direction:column;gap:6px;background:none;border:none;cursor:pointer;padding:4px;}
+        .navbar__toggle span{display:block;width:26px;height:1px;background:var(--text);transition:all 0.3s;}
+
+        /* Hero */
+        .hero{position:relative;min-height:80vh;display:flex;align-items:center;padding:8rem 5rem;overflow:hidden;}
+        .hero__bg{position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=2000&q=85') center/cover;transform:scale(1.05);animation:heroZoom 14s var(--ease) forwards;}
+        @keyframes heroZoom{to{transform:scale(1);}}
+        .hero__overlay{position:absolute;inset:0;background:linear-gradient(100deg,rgba(8,9,10,0.92) 0%,rgba(8,9,10,0.5) 55%,rgba(8,9,10,0.3) 100%);}
+        .hero__grain{position:absolute;inset:0;opacity:0.04;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+        .hero__content{position:relative;max-width:680px;animation:fadeUp 1s var(--ease) 0.2s both;}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:translateY(0);}}
+        .hero__content h1{margin:0.5rem 0 1.2rem;}
+        .hero__content h1 em{font-style:italic;color:var(--gold);}
+        .hero__content p{font-size:1.05rem;max-width:500px;}
+
+        /* Intro split */
+        .intro{padding:8rem 5rem;max-width:1300px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:6rem;align-items:center;}
+        .intro__text h2{margin:0.5rem 0 1.5rem;}
+        .intro__text p{margin-bottom:1rem;font-size:0.96rem;}
+        .intro__visual{position:relative;}
+        .intro__img-main{width:100%;height:540px;border-radius:2px;background:url('https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=900&q=80') center/cover;}
+        .intro__img-accent{position:absolute;bottom:-2.5rem;left:-2.5rem;width:190px;height:230px;background:url('https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80') center/cover;border-radius:2px;border:4px solid var(--bg);}
+        .intro__badge{position:absolute;top:2rem;right:-1.5rem;background:var(--gold);color:#08090a;padding:1.4rem;border-radius:2px;text-align:center;width:110px;}
+        .intro__badge-num{font-family:var(--display);font-size:2.2rem;font-weight:500;line-height:1;display:block;}
+        .intro__badge-text{font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:500;margin-top:0.3rem;display:block;}
+
+        /* Values */
+        .values{padding:5rem 5rem 8rem;background:var(--surface);border-top:1px solid var(--border);}
+        .values__header{max-width:1300px;margin:0 auto 4rem;display:flex;align-items:flex-end;justify-content:space-between;}
+        .values__header h2{max-width:420px;margin:0.5rem 0;}
+        .values__header p{max-width:280px;text-align:right;}
+        .values__grid{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);}
+        .value-card{background:var(--card);padding:2.8rem 2rem;transition:background 0.3s;cursor:default;}
+        .value-card:hover{background:var(--bg);}
+        .value-card__icon{font-size:1.5rem;color:var(--gold);display:block;margin-bottom:1.2rem;}
+        .value-card h3{font-size:1.2rem;margin-bottom:0.6rem;}
+        .value-card p{font-size:0.84rem;line-height:1.8;}
+
+        /* Team */
+        .team{padding:8rem 5rem;max-width:1300px;margin:0 auto;}
+        .team__header{text-align:center;margin-bottom:4rem;}
+        .team__header h2{margin:0.5rem 0 1rem;}
+        .team__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;}
+        .team-card{background:var(--card);border:1px solid var(--border);border-radius:2px;overflow:hidden;transition:transform 0.4s var(--ease),box-shadow 0.4s;}
+        .team-card:hover{transform:translateY(-5px);box-shadow:0 20px 50px rgba(0,0,0,0.4);}
+        .team-card__img{height:280px;background-size:cover;background-position:center top;transition:transform 0.5s var(--ease);}
+        .team-card:hover .team-card__img{transform:scale(1.03);}
+        .team-card__body{padding:1.8rem;}
+        .team-card__body h3{font-size:1.4rem;margin-bottom:0.2rem;}
+        .team-card__role{font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:0.8rem;font-weight:500;}
+        .team-card__body p{font-size:0.84rem;line-height:1.8;}
+
+        /* Timeline */
+        .timeline-section{padding:6rem 5rem;background:var(--surface);border-top:1px solid var(--border);}
+        .timeline-section__inner{max-width:900px;margin:0 auto;}
+        .timeline-section__inner h2{margin:0.5rem 0 3.5rem;}
+        .timeline{position:relative;padding-left:2rem;}
+        .timeline::before{content:'';position:absolute;left:0;top:0;bottom:0;width:1px;background:linear-gradient(to bottom,var(--gold),rgba(201,169,110,0.1));}
+        .timeline__item{display:flex;gap:2.5rem;margin-bottom:3rem;position:relative;}
+        .timeline__item::before{content:'';position:absolute;left:-2.35rem;top:0.45rem;width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 4px var(--gold-dim),0 0 0 1px var(--gold-border);}
+        .timeline__year{font-family:var(--display);font-size:1.8rem;font-weight:300;color:var(--gold);line-height:1;min-width:70px;padding-top:0.05rem;}
+        .timeline__content h4{font-family:var(--display);font-size:1.2rem;font-weight:400;margin-bottom:0.4rem;}
+        .timeline__content p{font-size:0.88rem;line-height:1.85;}
+
+        /* Testimonials */
+        .testimonials{padding:8rem 5rem;max-width:1300px;margin:0 auto;}
+        .testimonials__header{text-align:center;margin-bottom:4rem;}
+        .testimonials__header h2{margin:0.5rem 0;}
+        .testimonials__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;}
+        .testi-card{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:2.5rem;position:relative;transition:border-color 0.3s;}
+        .testi-card:hover{border-color:var(--gold-border);}
+        .testi-card__stars{color:var(--gold);font-size:0.75rem;letter-spacing:0.2em;margin-bottom:1.2rem;}
+        .testi-card blockquote{font-family:var(--display);font-size:1.05rem;font-style:italic;color:var(--text);line-height:1.65;margin-bottom:1.5rem;}
+        .testi-card cite{font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);font-style:normal;}
+        .testi-card__mark{position:absolute;top:1.5rem;right:2rem;font-family:var(--display);font-size:5rem;color:var(--gold);opacity:0.06;line-height:1;pointer-events:none;}
+
+        /* Awards */
+        .awards{padding:5rem 5rem;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+        .awards__inner{max-width:1300px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:2rem;flex-wrap:wrap;}
+        .awards__label{font-size:0.68rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);flex-shrink:0;}
+        .awards__list{display:flex;gap:3rem;flex-wrap:wrap;align-items:center;}
+        .award{text-align:center;}
+        .award__icon{font-size:1.6rem;color:var(--gold);display:block;margin-bottom:0.4rem;}
+        .award__name{font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);}
+
+        /* CTA */
+        .cta{padding:9rem 5rem;text-align:center;background:linear-gradient(rgba(8,9,10,0.75),rgba(8,9,10,0.75)),url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1800&q=80') center/cover fixed;}
+        .cta h2{margin:0.5rem 0 1rem;}
+        .cta p{margin-bottom:2.5rem;font-size:1rem;max-width:440px;margin-left:auto;margin-right:auto;}
+        .cta__actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+
+        /* Footer */
+        .footer{background:var(--surface);border-top:1px solid var(--border);padding:6rem 5rem 2.5rem;}
+        .footer__inner{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:4rem;margin-bottom:4rem;}
+        .footer__brand-logo{font-family:var(--display);font-size:1.5rem;color:var(--gold);display:flex;align-items:center;gap:0.5rem;margin-bottom:1.2rem;}
+        .footer__brand p{font-size:0.85rem;color:var(--muted);max-width:240px;line-height:1.85;margin-bottom:1.5rem;}
+        .footer__social{display:flex;gap:0.8rem;}
+        .footer__social a{width:36px;height:36px;border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--muted);transition:all 0.3s;}
+        .footer__social a:hover{border-color:var(--gold);color:var(--gold);}
+        .footer__col h4{font-family:var(--body);font-size:0.65rem;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);margin-bottom:1.4rem;}
+        .footer__col ul{display:flex;flex-direction:column;gap:0.7rem;}
+        .footer__col a{font-size:0.85rem;color:var(--muted);transition:color 0.3s;}
+        .footer__col a:hover{color:var(--gold-light);}
+        .footer__bottom{max-width:1300px;margin:0 auto;border-top:1px solid var(--border);padding-top:2rem;display:flex;align-items:center;justify-content:space-between;}
+        .footer__bottom p{font-size:0.75rem;color:var(--dim);}
+
+        .reveal{opacity:0;transform:translateY(30px);transition:opacity 0.8s var(--ease),transform 0.8s var(--ease);}
+        .reveal.visible{opacity:1;transform:translateY(0);}
+        ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px;}::-webkit-scrollbar-thumb:hover{background:var(--gold);}
+
+        @media(max-width:1100px){
+            .intro{grid-template-columns:1fr;gap:3rem;}
+            .intro__img-main{height:380px;}
+            .intro__badge{right:1rem;}
+            .values__grid{grid-template-columns:1fr 1fr;}
+            .team__grid{grid-template-columns:1fr 1fr;}
+            .testimonials__grid{grid-template-columns:1fr 1fr;}
+            .footer__inner{grid-template-columns:1fr 1fr;}
+        }
+        @media(max-width:768px){
+            .navbar,.navbar.scrolled{padding-left:1.5rem;padding-right:1.5rem;}
+            .navbar__links,.navbar__cta{display:none;}
+            .navbar__toggle{display:flex;}
+            .hero,.intro,.values,.team,.timeline-section,.testimonials,.awards,.cta,.footer{padding-left:1.5rem;padding-right:1.5rem;}
+            .values__header{flex-direction:column;align-items:flex-start;gap:1rem;}
+            .values__header p{text-align:left;}
+            .values__grid,.team__grid,.testimonials__grid{grid-template-columns:1fr;}
+            .awards__inner{flex-direction:column;align-items:flex-start;}
+            .awards__list{gap:2rem;}
+            .footer__inner{grid-template-columns:1fr;}
+            .footer__bottom{flex-direction:column;gap:0.8rem;text-align:center;}
+            .cta{background-attachment:scroll;}
+        }
+    </style>
+</head>
+<body>
+
+<div id="cursorDot"><div class="cursor__dot"></div></div>
+<div id="cursorRing"><div class="cursor__ring"></div></div>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+    <a th:href="@{/}" class="navbar__logo"><span class="navbar__logo-mark">✦</span><span th:text="${hotelName}">The Grand Horizon</span></a>
+    <ul class="navbar__links">
+        <li><a th:href="@{/}">Home</a></li>
+        <li><a th:href="@{/rooms}">Rooms</a></li>
+        <li><a th:href="@{/amenities}">Amenities</a></li>
+        <li><a th:href="@{/gallery}">Gallery</a></li>
+        <li><a th:href="@{/about}" class="active">About</a></li>
+        <li><a th:href="@{/contact}">Contact</a></li>
+    </ul>
+    <div class="navbar__cta">
+        <a th:href="@{/booking/lookup}" class="navbar__cta-link">My Booking</a>
+        <a th:href="@{/booking}" class="btn btn--primary">Reserve Now</a>
+    </div>
+    <button class="navbar__toggle" id="navToggle"><span></span><span></span><span></span></button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero__bg"></div><div class="hero__overlay"></div><div class="hero__grain"></div>
+    <div class="hero__content">
+        <span class="eyebrow">Our Story</span>
+        <h1>Built on a Passion for <em>Exceptional Living</em></h1>
+        <p>A sanctuary founded on the conviction that true luxury is not excess — it is the art of extraordinary attention.</p>
+    </div>
+</section>
+
+<!-- INTRO -->
+<section class="intro">
+    <div class="intro__text reveal">
+        <span class="eyebrow">Who We Are</span>
+        <h2>More Than a Hotel —<br/><em>A Way of Life</em></h2>
+        <p>The Grand Horizon was founded on a single conviction: that true luxury is not about excess, but about the art of attention. Every suite, every meal, every interaction is shaped by an obsessive care for detail and a deep respect for the guest.</p>
+        <p>Nestled between the mountains and the sea, our resort offers a rare convergence of natural beauty and refined hospitality — a place where time slows, and the world feels very far away.</p>
+        <a th:href="@{/rooms}" class="link-arrow">Explore Our Rooms →</a>
+    </div>
+    <div class="intro__visual reveal">
+        <div class="intro__img-main"></div>
+        <div class="intro__img-accent"></div>
+        <div class="intro__badge">
+            <span class="intro__badge-num">14</span>
+            <span class="intro__badge-text">Years of Excellence</span>
+        </div>
+    </div>
+</section>
+
+<!-- VALUES -->
+<section class="values">
+    <div class="values__header reveal">
+        <div><span class="eyebrow">What We Believe</span><h2>Our Guiding Principles</h2></div>
+        <p>Four convictions that shape every decision we make and every experience we create.</p>
+    </div>
+    <div class="values__grid">
+        <div class="value-card reveal">
+            <span class="value-card__icon">✦</span>
+            <h3>Crafted Simplicity</h3>
+            <p>The most profound luxury is the absence of friction. Every element of your stay is designed to feel effortless, invisible, and inevitable.</p>
+        </div>
+        <div class="value-card reveal">
+            <span class="value-card__icon">◈</span>
+            <h3>Rooted in Place</h3>
+            <p>Our cuisine, décor, and spirit draw from the landscape around us. We are of this land, and we honour it in everything we do.</p>
+        </div>
+        <div class="value-card reveal">
+            <span class="value-card__icon">◎</span>
+            <h3>Human Connection</h3>
+            <p>Behind every service is a person who genuinely cares. We hire for warmth first, and train the rest. No script — just sincerity.</p>
+        </div>
+        <div class="value-card reveal">
+            <span class="value-card__icon">⬡</span>
+            <h3>Sustainable Stewardship</h3>
+            <p>We are custodians of this beautiful place. Our practices are guided by a deep responsibility to the environment and to future guests.</p>
+        </div>
+    </div>
+</section>
+
+<!-- TEAM -->
+<section class="team">
+    <div class="team__header reveal">
+        <span class="eyebrow">The People Behind It</span>
+        <h2>Our Leadership</h2>
+        <p>The Grand Horizon is brought to life by a team of passionate individuals who believe hospitality is a calling, not a job.</p>
+    </div>
+    <div class="team__grid">
+        <div class="team-card reveal">
+            <div class="team-card__img" style="background-image:url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&q=80')"></div>
+            <div class="team-card__body">
+                <h3>Eleanor Vance</h3>
+                <span class="team-card__role">Founder &amp; General Manager</span>
+                <p>With 25 years in luxury hospitality across four continents, Eleanor brought her vision of quiet luxury to life with The Grand Horizon in 2012.</p>
+            </div>
+        </div>
+        <div class="team-card reveal">
+            <div class="team-card__img" style="background-image:url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80')"></div>
+            <div class="team-card__body">
+                <h3>Marcus Chen</h3>
+                <span class="team-card__role">Executive Chef</span>
+                <p>A Michelin-starred chef who believes exceptional food is a conversation between the land and the table. His menus change with the seasons.</p>
+            </div>
+        </div>
+        <div class="team-card reveal">
+            <div class="team-card__img" style="background-image:url('https://images.unsplash.com/photo-1580489944761-15a19d654956?w=600&q=80')"></div>
+            <div class="team-card__body">
+                <h3>Isla Fontaine</h3>
+                <span class="team-card__role">Head of Guest Experience</span>
+                <p>Isla's philosophy: anticipate before you're asked. Her team sets the benchmark for intuitive, heartfelt service across the entire resort.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TIMELINE -->
+<section class="timeline-section">
+    <div class="timeline-section__inner">
+        <div class="reveal">
+            <span class="eyebrow">Our Journey</span>
+            <h2>Milestones That Shaped Us</h2>
+        </div>
+        <div class="timeline">
+            <div class="timeline__item reveal">
+                <span class="timeline__year">2004</span>
+                <div class="timeline__content"><h4>The Vision</h4><p>Eleanor Vance purchases the coastal estate and begins a decade-long restoration project, preserving the original architecture while reimagining every detail.</p></div>
+            </div>
+            <div class="timeline__item reveal">
+                <span class="timeline__year">2012</span>
+                <div class="timeline__content"><h4>Grand Opening</h4><p>The Grand Horizon opens its doors with 24 rooms and a waitlist that stretches three months. The world takes notice almost immediately.</p></div>
+            </div>
+            <div class="timeline__item reveal">
+                <span class="timeline__year">2015</span>
+                <div class="timeline__content"><h4>Culinary Recognition</h4><p>Chef Marcus Chen joins and the Horizon restaurant earns its first Michelin star within 18 months of opening.</p></div>
+            </div>
+            <div class="timeline__item reveal">
+                <span class="timeline__year">2016</span>
+                <div class="timeline__content"><h4>Serenity Spa Opens</h4><p>Our award-winning wellness sanctuary opens its doors, quickly becoming the most sought-after spa destination on the coast.</p></div>
+            </div>
+            <div class="timeline__item reveal">
+                <span class="timeline__year">2019</span>
+                <div class="timeline__content"><h4>Five-Star Recognition</h4><p>Awarded five stars by three major international hospitality organisations simultaneously — the first property in the region to do so.</p></div>
+            </div>
+            <div class="timeline__item reveal">
+                <span class="timeline__year">2024</span>
+                <div class="timeline__content"><h4>The Villa Collection</h4><p>Launch of our private villa collection — six exclusive residences with private pools, personal butlers, and the most expansive views on the property.</p></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials">
+    <div class="testimonials__header reveal">
+        <span class="eyebrow">Guest Voices</span>
+        <h2>What Our Guests Say</h2>
+    </div>
+    <div class="testimonials__grid">
+        <div class="testi-card reveal">
+            <div class="testi-card__stars">★ ★ ★ ★ ★</div>
+            <blockquote>"An extraordinary escape. The staff anticipated our every need, the food was impeccable, and waking up to that view felt like a dream we never wanted to leave."</blockquote>
+            <cite>— Amara J. · Ocean View Suite</cite>
+            <span class="testi-card__mark">"</span>
+        </div>
+        <div class="testi-card reveal">
+            <div class="testi-card__stars">★ ★ ★ ★ ★</div>
+            <blockquote>"We've stayed at luxury properties around the world, and The Grand Horizon stands apart. The sincerity of the team here is unlike anything we've experienced."</blockquote>
+            <cite>— James &amp; Sarah W. · Grand Pool Villa</cite>
+            <span class="testi-card__mark">"</span>
+        </div>
+        <div class="testi-card reveal">
+            <div class="testi-card__stars">★ ★ ★ ★ ★</div>
+            <blockquote>"The spa alone is worth the trip. Three days felt like three weeks of rest. I left a completely different person — lighter, calmer, and deeply grateful."</blockquote>
+            <cite>— Priya M. · Serenity Spa Retreat</cite>
+            <span class="testi-card__mark">"</span>
+        </div>
+    </div>
+</section>
+
+<!-- AWARDS -->
+<section class="awards">
+    <div class="awards__inner">
+        <span class="awards__label">Recognition &amp; Awards</span>
+        <div class="awards__list">
+            <div class="award"><span class="award__icon">✦</span><span class="award__name">5-Star Rating<br/>Forbes Travel</span></div>
+            <div class="award"><span class="award__icon">◎</span><span class="award__name">Best Luxury Resort<br/>Condé Nast 2024</span></div>
+            <div class="award"><span class="award__icon">◈</span><span class="award__name">Michelin Star<br/>Horizon Restaurant</span></div>
+            <div class="award"><span class="award__icon">⬡</span><span class="award__name">Top Spa Destination<br/>Tatler 2023</span></div>
+            <div class="award"><span class="award__icon">△</span><span class="award__name">Green Key Certified<br/>Sustainability</span></div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+    <span class="eyebrow">Come and Experience It</span>
+    <h2>Words Only Go So Far</h2>
+    <p>The rest must be lived. We look forward to welcoming you.</p>
+    <div class="cta__actions">
+        <a th:href="@{/booking}" class="btn btn--primary">Reserve Your Stay</a>
+        <a th:href="@{/contact}" class="btn btn--ghost">Get in Touch</a>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="footer__inner">
+        <div class="footer__brand">
+            <div class="footer__brand-logo"><span style="font-size:0.9rem;">✦</span><span th:text="${hotelName}">The Grand Horizon</span></div>
+            <p>A sanctuary of refined luxury, nestled where the earth meets the sky.</p>
+            <div class="footer__social"><a href="#">In</a><a href="#">Fb</a><a href="#">Tw</a><a href="#">Pi</a></div>
+        </div>
+        <div class="footer__col"><h4>Explore</h4><ul><li><a th:href="@{/rooms}">Rooms &amp; Suites</a></li><li><a th:href="@{/amenities}">Amenities</a></li><li><a th:href="@{/gallery}">Gallery</a></li><li><a th:href="@{/about}">Our Story</a></li><li><a th:href="@{/contact}">Contact</a></li></ul></div>
+        <div class="footer__col"><h4>Stay</h4><ul><li><a th:href="@{/booking}">Book a Room</a></li><li><a th:href="@{/booking/lookup}">My Booking</a></li><li><a href="#">Special Offers</a></li><li><a href="#">Events</a></li></ul></div>
+        <div class="footer__col"><h4>Contact</h4><ul><li><a href="#">123 Horizon Boulevard</a></li><li><a href="#">Coastal City, ST 00000</a></li><li><a href="tel:+18000000000">+1 (800) 000-0000</a></li><li><a href="mailto:hello@grandhorizon.com">hello@grandhorizon.com</a></li></ul></div>
+    </div>
+    <div class="footer__bottom">
+        <p>&copy; 2026 <span th:text="${hotelName}">The Grand Horizon</span>. All rights reserved.</p>
+        <p>Privacy Policy · Terms of Service</p>
+    </div>
+</footer>
+
+<script>
+    const dot=document.getElementById('cursorDot'),ring=document.getElementById('cursorRing');
+    let mx=0,my=0,rx=0,ry=0;
+    document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px';});
+    (function anim(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(anim);})();
+    const navbar=document.getElementById('navbar');
+    window.addEventListener('scroll',()=>navbar.classList.toggle('scrolled',scrollY>60),{passive:true});
+    document.getElementById('navToggle')?.addEventListener('click',()=>navbar.classList.toggle('open'));
+    const reveals=document.querySelectorAll('.reveal');
+    if('IntersectionObserver' in window){
+        const obs=new IntersectionObserver(entries=>{entries.forEach((e,i)=>{if(e.isIntersecting){e.target.style.transitionDelay=(i%4)*0.08+'s';e.target.classList.add('visible');obs.unobserve(e.target);}});},{threshold:0.1});
+        reveals.forEach(el=>obs.observe(el));
+    } else {reveals.forEach(el=>el.classList.add('visible'));}
+</script>
+</body>
+</html>
