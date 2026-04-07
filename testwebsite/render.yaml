@@ -6,7 +6,7 @@ services:
     startCommand: java -jar target/*.jar
     envVars:
       - key: JAVA_VERSION
-        value: 17
+        value: 25
       - key: SPRING_PROFILES_ACTIVE
         value: prod
       - key: DATABASE_URL
