@@ -23,6 +23,12 @@ public class AdminController {
         this.roomService    = roomService;
     }
 
+    // GET /admin/login — show login page
+    @GetMapping("/login")
+    public String loginPage() {
+        return "admin-login";
+    }
+
     // GET /admin — dashboard overview
     @GetMapping
     public String dashboard(Model model) {

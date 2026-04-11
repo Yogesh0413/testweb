@@ -59,11 +59,11 @@
 				<artifactId>spring-boot-starter-data-jpa</artifactId>
 			</dependency>
 
-			<!-- Security (login system)
+			<!-- Security (login system)-->
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-starter-security</artifactId>
-			</dependency> -->
+			</dependency>
 		<!-- PostgreSQL (production on Render) -->
 		<dependency>
 			<groupId>org.postgresql</groupId>

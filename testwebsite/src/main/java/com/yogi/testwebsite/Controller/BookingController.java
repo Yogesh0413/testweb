@@ -113,4 +113,30 @@ public class BookingController {
         redirectAttributes.addFlashAttribute("error", "No booking found with that code.");
         return "redirect:/booking/lookup";
     }
+    @GetMapping("/check-availability")
+    @ResponseBody
+    public java.util.Map<String, Object> checkAvailability(
+            @RequestParam Long roomId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkIn,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOut) {
+
+        var result = new java.util.LinkedHashMap<String, Object>();
+
+        if (!checkOut.isAfter(checkIn)) {
+            result.put("available", false);
+            result.put("message", "Check-out must be after check-in.");
+            return result;
+        }
+
+        boolean available = bookingService.isRoomAvailable(roomId, checkIn, checkOut);
+        result.put("available", available);
+
+        if (!available) {
+            result.put("message",
+                    "This room is already booked for part of those dates. " +
+                            "Please choose different dates or another room.");
+        }
+
+        return result;
+    }
 }

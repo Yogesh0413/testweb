@@ -408,10 +408,57 @@
         document.getElementById('sTotal').textContent='$'+total.toLocaleString('en-US',{maximumFractionDigits:0});
     }
 
+    // ── Real-time availability check ──
+    let availCheckTimer = null;
+    const availBanner   = document.createElement('div');
+    availBanner.style.cssText = 'display:none;padding:0.9rem 1.2rem;border-radius:2px;font-size:0.83rem;margin-top:1rem;';
+    document.getElementById('checkOut').closest('.form-block').appendChild(availBanner);
+
+    function showAvailBanner(ok, msg) {
+        availBanner.style.display = msg ? 'block' : 'none';
+        availBanner.style.background   = ok ? 'rgba(92,173,120,0.1)' : 'rgba(192,96,96,0.1)';
+        availBanner.style.border       = ok ? '1px solid rgba(92,173,120,0.25)' : '1px solid rgba(192,96,96,0.25)';
+        availBanner.style.color        = ok ? '#5cad78' : '#e89090';
+        availBanner.textContent        = msg || '';
+    }
+
+    function checkAvailability() {
+        const roomInput = document.querySelector('input[name="roomId"]:checked');
+        if (!roomInput || !ci.value || !co.value) return;
+        if (new Date(co.value) <= new Date(ci.value)) return;
+
+        clearTimeout(availCheckTimer);
+        availCheckTimer = setTimeout(async () => {
+            try {
+                const url = `/booking/check-availability?roomId=${roomInput.value}&checkIn=${ci.value}&checkOut=${co.value}`;
+                const res  = await fetch(url);
+                const data = await res.json();
+                if (data.available) {
+                    showAvailBanner(true, '✓ Room is available for your selected dates.');
+                } else {
+                    showAvailBanner(false, '✕ ' + (data.message || 'Room not available for these dates.'));
+                }
+            } catch (_) { /* silently ignore network errors */ }
+        }, 400); // debounce 400ms
+    }
+
+    ci.addEventListener('change', checkAvailability);
+    co.addEventListener('change', checkAvailability);
+    document.querySelectorAll('.room-option').forEach(opt => {
+        opt.addEventListener('click', checkAvailability);
+    });
+
     // Validate before submit
-    document.getElementById('bookingForm').addEventListener('submit',e=>{
-        if(!document.querySelector('input[name="roomId"]:checked')){e.preventDefault();alert('Please select a room.');return;}
-        if(new Date(co.value)<=new Date(ci.value)){e.preventDefault();alert('Check-out must be after check-in.');}
+    document.getElementById('bookingForm').addEventListener('submit', e => {
+        if (!document.querySelector('input[name="roomId"]:checked')) {
+            e.preventDefault();
+            alert('Please select a room.');
+            return;
+        }
+        if (new Date(co.value) <= new Date(ci.value)) {
+            e.preventDefault();
+            alert('Check-out must be after check-in.');
+        }
     });
 
     updateSummary();
