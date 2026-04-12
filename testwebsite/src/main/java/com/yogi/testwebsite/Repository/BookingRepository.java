@@ -16,36 +16,43 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByGuest_Email(String email);
     List<Booking> findByRoom_Id(Long roomId);
 
-    @Query("""
-        SELECT b FROM Booking b
-        WHERE b.room.id = :roomId
-          AND b.status <> com.hotelresort.model.Booking$Status.CANCELLED
-          AND b.checkIn  < :checkOut
-          AND b.checkOut > :checkIn
-    """)
+    /**
+     * Finds any active (non-cancelled) bookings for a room
+     * that overlap with the requested date range.
+     *
+     * Overlap condition:
+     *   existing.checkIn  < requested.checkOut
+     *   AND
+     *   existing.checkOut > requested.checkIn
+     */
+    @Query(value = "SELECT b FROM Booking b " +
+                   "WHERE b.room.id = :roomId " +
+                   "AND b.status <> :cancelled " +
+                   "AND b.checkIn < :checkOut " +
+                   "AND b.checkOut > :checkIn")
     List<Booking> findConflictingBookings(
-            @Param("roomId")   Long      roomId,
-            @Param("checkIn") LocalDate checkIn,
-            @Param("checkOut") LocalDate checkOut
+            @Param("roomId")    Long      roomId,
+            @Param("checkIn")   LocalDate checkIn,
+            @Param("checkOut")  LocalDate checkOut,
+            @Param("cancelled") Booking.Status cancelled
     );
 
     /**
-     * Same as above but excludes a specific booking —
-     * useful when modifying an existing booking so it
-     * does not conflict with itself.
+     * Same as above but excludes a specific booking ID —
+     * used when modifying an existing booking so it doesn't
+     * conflict with itself.
      */
-    @Query("""
-        SELECT b FROM Booking b
-        WHERE b.room.id  = :roomId
-          AND b.id       <> :excludeId
-          AND b.status   <> com.hotelresort.model.Booking$Status.CANCELLED
-          AND b.checkIn  < :checkOut
-          AND b.checkOut > :checkIn
-    """)
+    @Query(value = "SELECT b FROM Booking b " +
+                   "WHERE b.room.id = :roomId " +
+                   "AND b.id <> :excludeId " +
+                   "AND b.status <> :cancelled " +
+                   "AND b.checkIn < :checkOut " +
+                   "AND b.checkOut > :checkIn")
     List<Booking> findConflictingBookingsExcluding(
             @Param("roomId")    Long      roomId,
             @Param("checkIn")   LocalDate checkIn,
             @Param("checkOut")  LocalDate checkOut,
-            @Param("excludeId") Long      excludeId
+            @Param("excludeId") Long      excludeId,
+            @Param("cancelled") Booking.Status cancelled
     );
 }

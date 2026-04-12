@@ -31,3 +31,24 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# ── Secrets & environment ──────────────────
+application-prod.properties
+*.env
+.env
+
+# ── Compiled output ────────────────────────
+*.class
+*.jar
+*.war
+
+# ── OS files ───────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Logs ───────────────────────────────────
+*.log
+logs/
+
+# ── Docker ─────────────────────────────────
+.dockerignore

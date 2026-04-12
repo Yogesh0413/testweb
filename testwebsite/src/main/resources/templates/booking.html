@@ -218,6 +218,7 @@
             </div>
             <div class="room-options">
                 <label class="room-option" th:each="room : ${rooms}"
+                       th:data-price="${room.pricePerNight}"
                        th:classappend="${selectedRoomId != null and selectedRoomId == room.id} ? ' selected' : ''">
                     <input type="radio" name="roomId" th:value="${room.id}"
                            th:checked="${selectedRoomId != null and selectedRoomId == room.id}" required/>
@@ -380,13 +381,13 @@
             opt.classList.add('selected');
             opt.querySelector('input').checked=true;
             selectedName=opt.querySelector('.room-option__name')?.textContent?.trim()||'';
-            selectedPrice=parseFloat(opt.querySelector('.room-option__price')?.textContent?.replace(/[^0-9.]/g,'')||0);
+            selectedPrice=parseFloat(opt.dataset.price||'0');
             updateSummary();
         });
         // Pre-selected state
         if(opt.classList.contains('selected')){
             selectedName=opt.querySelector('.room-option__name')?.textContent?.trim()||'';
-            selectedPrice=parseFloat(opt.querySelector('.room-option__price')?.textContent?.replace(/[^0-9.]/g,'')||0);
+            selectedPrice=parseFloat(opt.dataset.price||'0');
         }
     });
 
